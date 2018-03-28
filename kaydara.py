@@ -1,30 +1,29 @@
 import os, sys, traceback, json, argparse, requests
 
 from datetime import datetime
-from Utils import FacebookAPI as FB
+from Utils import FacebookAPI
+from Utils import OpenWeatherMapAPI as WeatherAPI
 from flask import Flask, request
-
 
 app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
 # Handling webhook's verification: checking hub.verify_token and returning received hub.challenge
+# TO-DO: Move [VERIFY_TOKEN] to FacebookAPI.py
 def handle_verification():
     print('Handling Verification.')
     if request.args.get('hub.mode') == 'subscribe' and request.args.get('hub.challenge'):  
-        if request.args.get('hub.verify_token') == os.environ['VERIFY_TOKEN']:
+        if request.args.get('hub.verify_token') == VERIFY_TOKEN:
             print('Webhook verified.')
             return request.args.get('hub.challenge'), 200
         else:
-            print('Wrong verification token!'), 403
+            return 'Wrong verification token!', 403
     return 'Kaydara is working.', 200
-
 
 @app.route('/', methods=['POST'])
 # Handling received messages
 def handle_messages():
     payload = request.get_data()
-    token = os.environ['PAGE_ACCESS_TOKEN']
     webhook_type = get_type_from_payload(payload)
 
     # Handle messages
@@ -36,60 +35,67 @@ def handle_messages():
 
             # Start processing valid requests
             try:
-                FB.show_typing(token, sender_id)
-                response = processIncoming(sender_id, message)
-                FB.show_typing(token, sender_id, 'typing_off')
+                FacebookAPI.show_typing(sender_id)
+                msg_type, response = processIncoming(sender_id, message)
+                FacebookAPI.show_typing(sender_id, 'typing_off')
 
-                print('RESPONSE: ' + str(response))
-                FB.send_message(token, sender_id, response)
+                if msg_type == 'location':
+                    WeatherAPI.sendWeatherInfo(sender_id, response)
+
+                elif msg_type == 'image':
+                    FacebookAPI.send_message(sender_id, 'Received your image.')
+                    FacebookAPI.send_picture(sender_id, message['data'], 'Title', 'Subtitle')   
+
+                else:
+                    print('RESPONSE: ' + str(response))
+                    FacebookAPI.send_message(sender_id, response)
 
             except Exception as e:
                 print('EXCEPTION ' + str(e))
                 traceback.print_exc()
-                #FB.send_message(os.environ['PAGE_ACCESS_TOKEN'], sender_id, NLP.oneOf(NLP.error))
+                #FacebookAPI.send_message(os.environ['PAGE_ACCESS_TOKEN'], sender_id, NLP.oneOf(NLP.error))
     return 'ok'
 
 def processIncoming(user_id, message):
-
     # Text message
     if message['type'] == 'text':
         message_text = message['data']
-        return message_text
+        return 'text', message_text
 
     # Location message type 
     elif message['type'] == 'location':
-        response = "I've received location (%s,%s) (y)"%(message['data'][0],message['data'][1])
-        return response
+        #response = "I've received location (%s,%s) (y)"%(message['data'][0],message['data'][1])
+        response = message['data']
+        return 'location', response
 
     # Image message type 
     elif message['type'] == 'image':
         image_url = message['data']
-        return "I've received your image: %s"%(image_url)
+        #return "I've received your image: %s"%(image_url)
+        return 'image', image_url
 
     # Audio message type 
     elif message['type'] == 'audio':
         audio_url = message['data']
-        return "I've received your audio: %s"%(audio_url)
+        return 'audio', "I've received your audio: %s"%(audio_url)
 
     # Video message type
     elif message['type'] == 'video':
         video_url = message['data']
-        return "I've received your video: %s"%(video_url)  
+        return 'video', "I've received your video: %s"%(video_url)  
 
     # File message type
     elif message['type'] == 'file':
         file_url = message['data']
-        return "I've received your file: %s"%(file_url)      
-
+        return 'file', "I've received your file: %s"%(file_url)      
 
     # Unrecognizable incoming 
     else:
-        return "*scratch my head*"
+        return None, "*scratch my head*"
 
 # Generate tuples of (sender_id, message_text) from the provided payload.
 # This part technically clean up received data to pass only meaningful data to processIncoming() function
-def messaging_events(payload):
-    
+def messaging_events(payload): 
     data = json.loads(payload)
     messaging_events = data['entry'][0]['messaging']
     
@@ -110,12 +116,13 @@ def messaging_events(payload):
             
             # Location
             if 'location' == event['message']['attachments'][0]['type']:
-                coordinates = event['message']['attachments'][
-                    0]['payload']['coordinates']
+                coordinates = event['message']['attachments'][0]['payload']['coordinates']
                 latitude = coordinates['lat']
                 longitude = coordinates['long']
 
-                yield sender_id, {'type':'location','data':[latitude, longitude],'message_id': event['message']['mid']}
+                data = WeatherAPI.getCurrentWeather(latitude, longitude) # obviously not the correct place
+                #yield sender_id, {'type':'location','data':[latitude, longitude],'message_id': event['message']['mid']}
+                yield sender_id, {'type':'location','data': data,'message_id': event['message']['mid']}
 
             # Audio, Video, Image or File
             elif event['message']['attachments'][0]['type'] in ('audio', 'video', 'image', 'file'):

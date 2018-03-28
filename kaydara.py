@@ -1,85 +1,162 @@
-import os
-import sys
-import json
-from datetime import datetime
+import os, sys, traceback, json, argparse, requests
 
-import requests
+from datetime import datetime
+from Utils import FacebookAPI as FB
 from flask import Flask, request
+
 
 app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
-def verify():
-    # when the endpoint is registered as a webhook, it must echo back
-    # the 'hub.challenge' value it receives in the query arguments
-    if request.args.get("hub.mode") == "subscribe" and request.args.get("hub.challenge"):
-        if not request.args.get("hub.verify_token") == os.environ["VERIFY_TOKEN"]:
-            return "Verification token mismatch", 403
-        return request.args["hub.challenge"], 200
-    return "Hello world", 200
+# Handling webhook's verification: checking hub.verify_token and returning received hub.challenge
+def handle_verification():
+    print('Handling Verification.')
+    if request.args.get('hub.mode') == 'subscribe' and request.args.get('hub.challenge'):  
+        if request.args.get('hub.verify_token') == os.environ['VERIFY_TOKEN']:
+            print('Webhook verified.')
+            return request.args.get('hub.challenge'), 200
+        else:
+            print('Wrong verification token!'), 403
+    return 'Kaydara is working.', 200
+
 
 @app.route('/', methods=['POST'])
-def webhook():
+# Handling received messages
+def handle_messages():
+    payload = request.get_data()
+    token = os.environ['PAGE_ACCESS_TOKEN']
+    webhook_type = get_type_from_payload(payload)
 
-    # endpoint for processing incoming messaging events
-    data = request.get_json()
-    log(data)  # you may not want to log every incoming message in production, but it's good for testing
+    # Handle messages
+    if webhook_type == 'message':
+        for sender_id, message in messaging_events(payload):
+            # Only process message in here
+            if not message:
+                return 'ok'
 
-    if data["object"] == "page":
-        for entry in data["entry"]:
-            for messaging_event in entry["messaging"]:
-                if messaging_event.get("message"):  # someone sent us a message
+            # Start processing valid requests
+            try:
+                FB.show_typing(token, sender_id)
+                response = processIncoming(sender_id, message)
+                FB.show_typing(token, sender_id, 'typing_off')
 
-                    sender_id = messaging_event["sender"]["id"]        # the facebook ID of the person sending you the message
-                    recipient_id = messaging_event["recipient"]["id"]  # the recipient's ID, which should be your page's facebook ID
-                    message_text = messaging_event["message"]["text"]  # the message's text
+                print('RESPONSE: ' + str(response))
+                FB.send_message(token, sender_id, response)
 
-                    send_message(sender_id, "roger that!")
+            except Exception as e:
+                print('EXCEPTION ' + str(e))
+                traceback.print_exc()
+                #FB.send_message(os.environ['PAGE_ACCESS_TOKEN'], sender_id, NLP.oneOf(NLP.error))
+    return 'ok'
 
-                if messaging_event.get("delivery"):  # delivery confirmation
-                    pass
+def processIncoming(user_id, message):
 
-                if messaging_event.get("optin"):  # optin confirmation
-                    pass
+    # Text message
+    if message['type'] == 'text':
+        message_text = message['data']
+        return message_text
 
-                if messaging_event.get("postback"):  # user clicked/tapped "postback" button in earlier message
-                    pass
+    # Location message type 
+    elif message['type'] == 'location':
+        response = "I've received location (%s,%s) (y)"%(message['data'][0],message['data'][1])
+        return response
 
-    return "ok", 200
+    # Image message type 
+    elif message['type'] == 'image':
+        image_url = message['data']
+        return "I've received your image: %s"%(image_url)
 
-def send_message(recipient_id, message_text):
+    # Audio message type 
+    elif message['type'] == 'audio':
+        audio_url = message['data']
+        return "I've received your audio: %s"%(audio_url)
 
-    log("sending message to {recipient}: {text}".format(recipient=recipient_id, text=message_text))
+    # Video message type
+    elif message['type'] == 'video':
+        video_url = message['data']
+        return "I've received your video: %s"%(video_url)  
 
-    params = {
-        "access_token": os.environ["PAGE_ACCESS_TOKEN"]
-    }
-    headers = {
-        "Content-Type": "application/json"
-    }
-    data = json.dumps({
-        "recipient": {
-            "id": recipient_id
-        },
-        "message": {
-            "text": message_text
-        }
-    })
-    r = requests.post("https://graph.facebook.com/v2.6/me/messages", params=params, headers=headers, data=data)
-    if r.status_code != 200:
-        log(r.status_code)
-        log(r.text)
+    # File message type
+    elif message['type'] == 'file':
+        file_url = message['data']
+        return "I've received your file: %s"%(file_url)      
 
-def log(msg, *args, **kwargs):  # simple wrapper for logging to stdout on heroku
-    try:
-        if type(msg) is dict:
-            msg = json.dumps(msg)
+
+    # Unrecognizable incoming 
+    else:
+        return "*scratch my head*"
+
+# Generate tuples of (sender_id, message_text) from the provided payload.
+# This part technically clean up received data to pass only meaningful data to processIncoming() function
+def messaging_events(payload):
+    
+    data = json.loads(payload)
+    messaging_events = data['entry'][0]['messaging']
+    
+    for event in messaging_events:
+        sender_id = event['sender']['id']
+
+        # Not a message
+        if 'message' not in event:
+            yield sender_id, None
+
+        # Text message
+        if 'message' in event and 'text' in event['message'] and 'quick_reply' not in event['message']:
+            data = event['message']['text']
+            yield sender_id, {'type':'text', 'data': data, 'message_id': event['message']['mid']}
+
+        # Attachments
+        elif 'attachments' in event['message']:
+            
+            # Location
+            if 'location' == event['message']['attachments'][0]['type']:
+                coordinates = event['message']['attachments'][
+                    0]['payload']['coordinates']
+                latitude = coordinates['lat']
+                longitude = coordinates['long']
+
+                yield sender_id, {'type':'location','data':[latitude, longitude],'message_id': event['message']['mid']}
+
+            # Audio, Video, Image or File
+            elif event['message']['attachments'][0]['type'] in ('audio', 'video', 'image', 'file'):
+                url = event['message']['attachments'][0]['payload']['url']
+                yield sender_id, {'type': event['message']['attachments'][0]['type'], 'data': url, 'message_id': event['message']['mid']}
+            
+            else:
+                yield sender_id, {'type':'text','data':"I don't understand this [Attachment not verified]", 'message_id': event['message']['mid']}
+
+        # Quick_reply
+        elif 'quick_reply' in event['message']:
+            data = event['message']['quick_reply']['payload']
+            yield sender_id, {'type':'quick_reply','data': data, 'message_id': event['message']['mid']}
+        
         else:
-            msg = str(msg).format(*args, **kwargs)
-        print(u"{}: {}".format(datetime.now(), msg))
-    except UnicodeEncodeError:
-        pass  # squash logging errors in case of non-ascii text
-    sys.stdout.flush()
+            yield sender_id, {'type':'text','data':"I don't understand this! [Not verified]", 'message_id': event['message']['mid']}
 
+# Not used yet
+#def postback_events(payload):
+#    data = json.loads(payload)
+    
+#    postbacks = data["entry"][0]["messaging"]
+    
+#    for event in postbacks:
+#        sender_id = event["sender"]["id"]
+#        postback_payload = event["postback"]["payload"]
+#        yield sender_id, postback_payload
+
+# Returning payloads' type - currently only supporting 'message'
+def get_type_from_payload(payload):
+    data = json.loads(payload)
+    if 'message' in data['entry'][0]['messaging'][0]:
+        return 'message'
+    if 'postback' in data['entry'][0]['messaging'][0]:
+        return 'postback'
+
+# Allows running with simple `python kaydara <port>`
 if __name__ == '__main__':
-    app.run(debug=True)
+    parser = argparse.ArgumentParser(prog = 'kaydara')
+    parser.add_argument('-p','--port', help = 'running on customized port', type = int, default = 5000)
+    args = parser.parse_args()
+
+    app.run(port = args.port)
+    

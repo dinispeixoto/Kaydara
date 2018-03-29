@@ -1,13 +1,9 @@
 import requests, json, os
 from flask import url_for
 
-# Environment varibles on heroku
-#VERIFY_TOKEN = os.environ['VERIFY_TOKEN']
-#PAGE_ACCESS_TOKEN = os.environ['PAGE_ACCESS_TOKEN']
-
-# JUST FOR DEBUG PURPOSES
-VERIFY_TOKEN = 'TESTINGTOKEN'
-PAGE_ACCESS_TOKEN = 'EAAEauAoeQ1cBAMaDSOs9uC9VMNIJLdH7l3lQ2LZAjc8VA83mIJL6IXvBmFJGfEVZBQZA7Y1FeVOGRDfa7iBuwiTGUWxITUo49mZA53nbvRLpCQ2akmjI4PuLHNErrq2mWkw9etNFA4q7BvAqjU7P6L5ITnQz62samm4VofvZCvwZDZD'
+# Environment variables on heroku
+VERIFY_TOKEN = os.environ['VERIFY_TOKEN']
+PAGE_ACCESS_TOKEN = os.environ['PAGE_ACCESS_TOKEN']
 
 # Show typing effect
 def show_typing(user_id, action='typing_on'):

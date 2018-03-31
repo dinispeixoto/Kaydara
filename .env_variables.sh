@@ -16,3 +16,10 @@ export IBM_VERSION='2018-03-27'
 # SpeechAPI
 export SPEECH_USERNAME='ba256ba4-47cd-4faf-a82b-47ebbcf2d826'
 export SPEECH_PASSWORD='iIgP6Gl8qfmb'
+
+# OAuth2
+export GOOGLE_SCOPES='https://www.googleapis.com/auth/calendar
+                      https://www.googleapis.com/auth/userinfo.email
+                      https://mail.google.com/'
+export CLIENT_SECRET_FILE='resources/client_secret.json'
+export APPLICATION_NAME='Kaydara'

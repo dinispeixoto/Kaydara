@@ -5,67 +5,103 @@ from flask import url_for
 VERIFY_TOKEN = os.environ['VERIFY_TOKEN']
 PAGE_ACCESS_TOKEN = os.environ['PAGE_ACCESS_TOKEN']
 
+params = {'access_token': PAGE_ACCESS_TOKEN}
+headers = {'Content-type': 'application/json'}
+
 # Show typing effect
 def show_typing(user_id, action='typing_on'):
-    params = {
-        'access_token': PAGE_ACCESS_TOKEN
-    }
     data = json.dumps({
         'recipient': {'id': user_id},
         'sender_action': action
     })
-    headers = {
-        'Content-type': 'application/json'
-    }
-    r = requests.post('https://graph.facebook.com/v2.6/me/messages', params = params, headers = headers, data = data)
-    if r.status_code != requests.codes.ok:
-        print(r.status_code + ': ' + r.text)
+
+    response = requests.post('https://graph.facebook.com/v2.6/me/messages', params = params, headers = headers, data = data)
+    if response.status_code != response.ok:
+        print(response.status_code)
+        print(response.text)
 
 # Sending text message
 def send_message(user_id, text):
-    params = {
-        'access_token': PAGE_ACCESS_TOKEN
-    }
     data = json.dumps({
         'recipient': {'id': user_id},
         'message': {'text': text}
     })
-    headers = {
-        'Content-type': 'application/json'
-    }
-    r = requests.post('https://graph.facebook.com/v2.6/me/messages', params = params, headers = headers, data = data)
-    if r.status_code != requests.codes.ok: # != 200
-        print(r.status_code + ': ' + r.text)
+
+    response = requests.post('https://graph.facebook.com/v2.6/me/messages', params = params, headers = headers, data = data)
+    if response.status_code != response.ok: 
+        print(response.status_code)
+        print(response.text)
 
 # Sending picture
 def send_picture(user_id, imageUrl, title="", subtitle=""):
     if title != "":
-        data = {"recipient": {"id": user_id},
-                  "message":{
-                      "attachment": {
-                          "type": "template",
-                          "payload": {
-                              "template_type": "generic",
-                              "elements": [{
-                                  "title": title,
-                                  "subtitle": subtitle,
-                                  "image_url": imageUrl
-                              }]
-                          }
-                      }
-                    }
-              }
-    else:
-        data = { "recipient": {"id": user_id},
+        data = json.dumps({
+            "recipient": {"id": user_id},
                 "message":{
-                  "attachment": {
-                      "type": "image",
-                      "payload": {
-                          "url": imageUrl
-                      }
-                  }
+                    "attachment": {
+                        "type": "template",
+                        "payload": {
+                            "template_type": "generic",
+                            "elements": [{
+                                "title": title,
+                                "subtitle": subtitle,
+                                "image_url": imageUrl
+                            }]
+                        }
+                    }
+                }
+              })
+    else:
+        data = json.dumps({ 
+            "recipient": {"id": user_id},
+                "message":{
+                    "attachment": {
+                        "type": "image",
+                        "payload": {
+                            "url": imageUrl
+                        }
+                    }
+                }
+            })
+
+    response = requests.post("https://graph.facebook.com/v2.6/me/messages", params = params, data = data, headers = headers)
+    if response.status_code != response.ok:
+        print(response.status_code)
+        print(response.text)   
+
+# Sending trending news (carousel of generic templates)
+def send_trending_news(user_id, data):
+    posts = []
+
+    for element in data:
+        post = {
+            "title": element['title'],
+            "image_url": element['urlToImage'],
+            "subtitle": element['description'],
+            "buttons": [
+                {
+                    'type': 'web_url',
+                    'url': element['url'],
+                    'title': 'Read more'
+                }
+            ]
+        }
+        posts.append(post)
+
+    data = json.dumps({
+        'recipient': {'id': user_id},
+        'message': {
+            'attachment': {
+                'type': 'template',
+                'payload': {
+                    'template_type': 'generic',
+                    'elements': posts[:10]          # scrollable carousel supports up to 10 generic templates
                 }
             }
-    r = requests.post("https://graph.facebook.com/v2.6/me/messages", params = {"access_token": PAGE_ACCESS_TOKEN}, data = json.dumps(data), headers = {'Content-type': 'application/json'})
-    if r.status_code != requests.codes.ok:
-        print(r.status_code + ': ' + r.text)   
+        }
+    })
+
+    response = requests.post("https://graph.facebook.com/v2.6/me/messages", params = params, data = data, headers = headers)
+    if response.status_code != response.ok:
+        print(response.status_code)
+        print(response.text)    

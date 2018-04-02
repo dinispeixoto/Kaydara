@@ -2,7 +2,7 @@ from watson_developer_cloud import AssistantV1
 import json, os
 
 WORKSPACE_ID = os.environ['WORKSPACE_ID']
-ASSISTANT = AssistantV1( 
+ASSISTANT = AssistantV1(
     username = os.environ['IBM_USERNAME'],
     password = os.environ['IBM_PASSWORD'],
     version = os.environ['IBM_VERSION'])
@@ -14,19 +14,20 @@ def extract_entities(list):
         entites.append(e['value'])
     return entites
 
-# send the message and return the intent, entities and the response 
-def send_message(message):
+# send the message and return the intent, entities and the response
+def send_message(message,context):
     ASSISTANT.set_http_config({'timeout': 100})
-    response = ASSISTANT.message(workspace_id = WORKSPACE_ID, input={'text': message })
-    
+    response = ASSISTANT.message(workspace_id = WORKSPACE_ID, input={'text': message }, context=context)
+
     json_response = json.dumps(response, indent = 2)
     dict_response = json.loads(json_response)
 
-    intent = dict_response['intents'][0]['intent']
+    intents = dict_response['intents']
     entities = extract_entities(dict_response['entities'])
-    output = dict_response['output']['text'][0] 
+    newContext = dict_response[u'context']
+    output = dict_response['output']['text']
 
-    return (intent, entities, output)
+    return (intents, entities, newContext, output)
 
 """
 if __name__ == '__main__':

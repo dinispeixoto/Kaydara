@@ -3,6 +3,7 @@ import os, sys, traceback, json, argparse, requests
 from datetime import datetime
 from Utils import FacebookAPI
 from Utils import OpenWeatherMapAPI as WeatherAPI
+from Utils import NewsAPI
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -13,7 +14,7 @@ app = Flask(__name__)
 def handle_verification():
     print('Handling Verification.')
     if request.args.get('hub.mode') == 'subscribe' and request.args.get('hub.challenge'):  
-        if request.args.get('hub.verify_token') == VERIFY_TOKEN:
+        if request.args.get('hub.verify_token') == FacebookAPI.VERIFY_TOKEN:
             print('Webhook verified.')
             return request.args.get('hub.challenge'), 200
         else:
@@ -45,6 +46,13 @@ def handle_messages():
                 elif msg_type == 'image':
                     FacebookAPI.send_message(sender_id, 'Received your image.')
                     FacebookAPI.send_picture(sender_id, message['data'], 'Title', 'Subtitle')   
+                
+                elif msg_type == 'news':
+                    FacebookAPI.send_message(sender_id, 'Received your news request.')
+                    if not response:
+                        FacebookAPI.send_message(sender_id, 'Haven\'t found any news related to the given keyword.')
+                    else:
+                        FacebookAPI.send_trending_news(sender_id, response)
 
                 else:
                     print('RESPONSE: ' + str(response))
@@ -56,11 +64,16 @@ def handle_messages():
                 #FacebookAPI.send_message(os.environ['PAGE_ACCESS_TOKEN'], sender_id, NLP.oneOf(NLP.error))
     return 'ok'
 
-def processIncoming(user_id, message):
+def processIncoming(user_id, message): 
     # Text message
     if message['type'] == 'text':
         message_text = message['data']
-        return 'text', message_text
+        if 'news' in message_text: 
+            data = message_text.split()
+            data = data[1:]
+            return 'news', NewsAPI.getTopHeadlines(' '.join(data)) # combining multiple keywords
+        else:
+            return 'text', message_text
 
     # Location message type 
     elif message['type'] == 'location':

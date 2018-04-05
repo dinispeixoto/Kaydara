@@ -2,7 +2,7 @@ import os, sys, traceback, json, argparse, requests
 
 from datetime import datetime
 from Utils import FacebookAPI
-from Utils import OpenWeatherMapAPI as WeatherAPI
+from Utils import OpenWeatherMapAPI
 from Utils import NewsAPI
 from flask import Flask, request
 
@@ -19,7 +19,7 @@ def handle_verification():
             return request.args.get('hub.challenge'), 200
         else:
             return 'Wrong verification token!', 403
-    return 'Kaydara is working.', 200
+    return 'Kaydara is working.', 200  
 
 @app.route('/', methods=['POST'])
 # Handling received messages
@@ -34,14 +34,28 @@ def handle_messages():
             if not message:
                 return 'ok'
 
-            # Start processing valid requests
+            # Start processing valid requests -> TEMOS DE REESTRUTURAR ISTO!!! DEIXO PARA QUANDO IMPLEMENTARMOS O NLP
             try:
                 FacebookAPI.show_typing(sender_id)
                 msg_type, response = processIncoming(sender_id, message)
                 FacebookAPI.show_typing(sender_id, 'typing_off')
 
-                if msg_type == 'location':
-                    WeatherAPI.sendWeatherInfo(sender_id, response)
+                if msg_type == 'weather_info': 
+                    icon, title, subtitle = OpenWeatherMapAPI.generateCurrentWeatherInfo(response)
+                    FacebookAPI.send_picture(sender_id, icon, title, subtitle)
+
+                elif msg_type == 'forecast_posts':
+                    elements = OpenWeatherMapAPI.generateForecastPosts(response)
+                    FacebookAPI.send_list(sender_id, elements)
+
+                elif msg_type == 'forecast_info':
+                    #icon, title, subtitle = OpenWeatherMapAPI.generateForecastDay(response,'2018-04-07','14:00:00')    
+                    #FacebookAPI.send_picture(sender_id, icon, title, subtitle)
+                    elements = OpenWeatherMapAPI.generateForecastDay(response,'2018-04-08')
+                    FacebookAPI.send_list(sender_id, elements)
+                    
+                    #elements = OpenWeatherMapAPI.generateForecastDay(response,'2018-04-08', True)
+                    #FacebookAPI.send_carousel(sender_id, elements)
 
                 elif msg_type == 'image':
                     FacebookAPI.send_message(sender_id, 'Received your image.')
@@ -52,7 +66,8 @@ def handle_messages():
                     if not response:
                         FacebookAPI.send_message(sender_id, 'Haven\'t found any news related to the given keyword.')
                     else:
-                        FacebookAPI.send_trending_news(sender_id, response)
+                        elements = NewsAPI.generateNewsPosts(response)
+                        FacebookAPI.send_carousel(sender_id, elements)
 
                 else:
                     print('RESPONSE: ' + str(response))
@@ -72,14 +87,30 @@ def processIncoming(user_id, message):
             data = message_text.split()
             data = data[1:]
             return 'news', NewsAPI.getTopHeadlines(' '.join(data)) # combining multiple keywords
+
+        elif 'weather in' in message_text: # usage: weather in <city>
+            data = message_text.split()
+            data = data[2:]
+            return 'weather_info', OpenWeatherMapAPI.getCurrentWeatherCity(' '.join(data)) 
+
+        elif 'weather on' in message_text: # usage: weather on <city> 
+            data = message_text.split()
+            data_splitted = data[2:] 
+            return 'forecast_info', OpenWeatherMapAPI.getForecastCity(' '.join(data_splitted))
+
+        elif 'forecast in' in message_text: # usage: forecast in <city>
+            data = message_text.split()
+            data = data[2:]
+            return 'forecast_posts', OpenWeatherMapAPI.getForecastCity(' '.join(data))
+
         else:
             return 'text', message_text
 
     # Location message type 
     elif message['type'] == 'location':
-        #response = "I've received location (%s,%s) (y)"%(message['data'][0],message['data'][1])
-        response = message['data']
-        return 'location', response
+        coordinates = message['data']
+        response = OpenWeatherMapAPI.getCurrentWeatherCoordinates(coordinates['lat'], coordinates['long']) 
+        return 'weather_info', response
 
     # Image message type 
     elif message['type'] == 'image':
@@ -130,12 +161,7 @@ def messaging_events(payload):
             # Location
             if 'location' == event['message']['attachments'][0]['type']:
                 coordinates = event['message']['attachments'][0]['payload']['coordinates']
-                latitude = coordinates['lat']
-                longitude = coordinates['long']
-
-                data = WeatherAPI.getCurrentWeather(latitude, longitude) # obviously not the correct place
-                #yield sender_id, {'type':'location','data':[latitude, longitude],'message_id': event['message']['mid']}
-                yield sender_id, {'type':'location','data': data,'message_id': event['message']['mid']}
+                yield sender_id, {'type':'location','data': coordinates,'message_id': event['message']['mid']}
 
             # Audio, Video, Image or File
             elif event['message']['attachments'][0]['type'] in ('audio', 'video', 'image', 'file'):

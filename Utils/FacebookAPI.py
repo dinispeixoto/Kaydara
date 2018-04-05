@@ -1,5 +1,6 @@
 import requests, json, os
 from flask import url_for
+from Utils import OpenWeatherMapAPI 
 
 # Environment variables on heroku
 VERIFY_TOKEN = os.environ['VERIFY_TOKEN']
@@ -20,7 +21,7 @@ def show_typing(user_id, action='typing_on'):
         print(response.status_code)
         print(response.text)
 
-# Sending text message
+# Send text message
 def send_message(user_id, text):
     data = json.dumps({
         'recipient': {'id': user_id},
@@ -32,7 +33,7 @@ def send_message(user_id, text):
         print(response.status_code)
         print(response.text)
 
-# Sending picture
+# Send picture
 def send_picture(user_id, imageUrl, title="", subtitle=""):
     if title != "":
         data = json.dumps({
@@ -41,6 +42,7 @@ def send_picture(user_id, imageUrl, title="", subtitle=""):
                     "attachment": {
                         "type": "template",
                         "payload": {
+                            "image_aspect_ratio": "square",
                             "template_type": "generic",
                             "elements": [{
                                 "title": title,
@@ -69,25 +71,8 @@ def send_picture(user_id, imageUrl, title="", subtitle=""):
         print(response.status_code)
         print(response.text)   
 
-# Sending trending news (carousel of generic templates)
-def send_trending_news(user_id, data):
-    posts = []
-
-    for element in data:
-        post = {
-            "title": element['title'],
-            "image_url": element['urlToImage'],
-            "subtitle": element['description'],
-            "buttons": [
-                {
-                    'type': 'web_url',
-                    'url': element['url'],
-                    'title': 'Read more'
-                }
-            ]
-        }
-        posts.append(post)
-
+# Send trending news (carousel of generic templates)
+def send_carousel(user_id, elements):
     data = json.dumps({
         'recipient': {'id': user_id},
         'message': {
@@ -95,7 +80,7 @@ def send_trending_news(user_id, data):
                 'type': 'template',
                 'payload': {
                     'template_type': 'generic',
-                    'elements': posts[:10]          # scrollable carousel supports up to 10 generic templates
+                    'elements': elements[:10]               # scrollable carousel supports up to 10 generic templates
                 }
             }
         }
@@ -105,3 +90,23 @@ def send_trending_news(user_id, data):
     if response.status_code != response.ok:
         print(response.status_code)
         print(response.text)    
+
+def send_list(user_id, elements, header_style = 'compact'):
+    data = json.dumps({
+        'recipient': {'id': user_id},
+        'message': {
+            'attachment': {
+                'type': 'template',
+                'payload': {
+                    'template_type': 'list',
+                    'top_element_style': header_style, 
+                    'elements': elements[:4]               # list supports up to 4 elements
+                }
+            }
+        }
+    })
+
+    response = requests.post("https://graph.facebook.com/v2.6/me/messages", params = params, data = data, headers = headers)
+    if response.status_code != response.ok:
+        print(response.status_code)
+        print(response.text)        

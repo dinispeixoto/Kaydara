@@ -82,6 +82,7 @@ celerybeat-schedule
 # dotenv
 .env
 .env_variables.sh
+.unset_variables.sh
 
 # virtualenv
 .venv

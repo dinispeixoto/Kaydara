@@ -1,21 +1,58 @@
-from Database import Database
+import json
+from Utils.db.Database import Database
 
-def create_tables(db):
-    db.query('CREATE TABLE IF NOT EXISTS clients (' + 
-             'client_id SERIAL PRIMARY KEY,' + 
-             'client_context VARCHAR(1024) NOT NULL);')
 
-def insert_client(db, id, context):
-    db.query_params('INSERT INTO clients (client_id, client_context) VALUES (%s, %s)', (id, context,))
+class Client():
+    def __init__(self, id, context):
+        self.id = id
+        self.context = context
 
-def get_client(db, id):
-    db.query_params('SELECT client_context FROM clients WHERE client_id = %s', (id,))
-    return db.result_set()
 
-def destroy(db):
+def create_tables():
+    db.query('CREATE TABLE IF NOT EXISTS clients (' +
+             'client_id SERIAL PRIMARY KEY,' +
+             'facebook_id BIGINT NOT NULL,' +
+             'client_context VARCHAR(1024));')
+    db.close()
+
+
+def insert_client(id, context):
+    db = Database()
+    db.query_params('INSERT INTO clients (facebook_id, client_context) VALUES (%s, %s)', (id, context,))
+    db.close()
+
+
+def update_client_context(id, context):
+    db = Database()
+    db.query_params('UPDATE clients SET client_context = %s WHERE facebook_id = %s', (context, id,))
+    db.close()
+
+
+def get_client(id):
+    db = Database()
+    db.query_params('SELECT client_context FROM clients WHERE facebook_id = %s', (id,))
+    rs = db.result_set()
+    db.close()
+    print(rs)
+    if len(rs) != 0:
+        print("EXISTE")
+        if rs[0][0] is None:
+            return Client(id, None)
+        else:
+            return Client(id, json.loads(rs[0][0]))
+    else:
+        print("NAO EXISTE")
+        return None
+
+
+def destroy():
+    db = Database()
     db.query('DROP TABLE IF EXISTS clients;')
+    db.close()
 
-def populate(db):
+
+def populate():
+    db = Database()
     destroy(db)
     create_tables(db)
     insert_client(db, 1, 'context')
@@ -23,8 +60,4 @@ def populate(db):
 
     for row in rows:
         print(row[0])
- 
-if __name__ == '__main__':
-    db = Database()
-    populate(db)
     db.close()

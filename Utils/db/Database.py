@@ -1,10 +1,10 @@
-import os
-import Config
+from Utils.db import Config
 import psycopg2
+
 
 class Database():
     def __init__(self):
-        try:    
+        try:
             params = Config.config()
             self.conn = psycopg2.connect(**params)
         except (Exception, psycopg2.DatabaseError) as error:
@@ -15,7 +15,7 @@ class Database():
         self.cur.execute(query)
 
     def query_params(self, query, params):
-        self.cur.execute(query, params)
+        return self.cur.execute(query, params)
 
     def result_set(self):
         return self.cur.fetchall()

@@ -12,7 +12,7 @@ def getCurrentWeatherCoordinates(latitude, longitude):
     if response.status_code != response.ok:
         print(response.status_code)
         print(response.text)
-    return response.json() 
+    return response.json()
 
 # Requesting current weather based on a given city
 # Query examples can be: 'Braga' or 'Braga, PT' or 'Braga, Portugal'.
@@ -22,7 +22,7 @@ def getCurrentWeatherCity(query):
     if response.status_code != response.ok:
         print(response.status_code)
         print(response.text)
-    return response.json() 
+    return response.json()
 
 # Requesting forecast based on user's location
 # Example: http://api.openweathermap.org/data/2.5/forecast?lat=41.556933003653&lon=-8.3991009308468&units=metric&appid=6979706d12688265a5ba7d3b5590625f
@@ -31,7 +31,7 @@ def getForecastCoordinates(latitude, longitude):
     if response.status_code != response.ok:
         print(response.status_code)
         print(response.text)
-    return response.json() 
+    return response.json()
 
 # Requesting forecast based on a given city
 # Example: http://api.openweathermap.org/data/2.5/forecast?q=Braga&units=metric&appid=6979706d12688265a5ba7d3b5590625f
@@ -40,21 +40,21 @@ def getForecastCity(query):
     if response.status_code != response.ok:
         print(response.status_code)
         print(response.text)
-    return response.json() 
+    return response.json()
 
 # Get icon_img based on given id and openweathermap's icon.
 def getIcon(id, icon):
     icon_url = url_for('static', filename=f'assets/img/weather_icons/{id}-{icon}.png', _external=True)
     if not os.path.exists(icon_url):
         icon_url = url_for('static', filename=f'assets/img/weather_icons/{icon}.png', _external=True)
-    return icon_url    
+    return icon_url
 
 # Get weather description based on given description, temperature and (optionally) humidity.
 def getDescription(description, temperature, humidity = None):
     if humidity:
-        return f"Description: {description.capitalize()}\nTemperature: {temperature} ºC\nHumidity: {humidity}%" 
+        return f"Description: {description.capitalize()}\nTemperature: {temperature} ºC\nHumidity: {humidity}%"
     else:
-        return f"{temperature} ºC\n{description.capitalize()}"    
+        return f"{temperature} ºC\n{description.capitalize()}"
 
 # Generate current weather info
 def generateCurrentWeatherInfo(data):
@@ -67,7 +67,7 @@ def generateCurrentWeatherInfo(data):
 # Generate weather info for specific day.
 # date example = 2018-04-06
 # hour example = 12:00:00
-def generateSimpleForecastDay(data, date, hour = '12:00:00'):
+def generateSimpleForecastDay(data, date, hour):
     date_hour = f'{date} {hour}'
     data_list = data['list']
     for element in data_list:
@@ -93,7 +93,7 @@ def generateForecastDay(data, date, showAll = False):
                     'subtitle': getDescription(weather['description'], element['main']['temp']),
                 }
                 posts.append(post)
-    return posts              
+    return posts
 
 # Generate forecast posts to send.
 # Adding the first element on the list, since it's giving information about the current day.
@@ -102,8 +102,8 @@ def generateForecastPosts(data):
     posts = []
     data_list = data['list']
     aproximate_hour = parser.parse(data_list[0]['dt_txt']).strftime('%H:%M:%S')
-    for element in data_list: 
-        if aproximate_hour in element['dt_txt']:      
+    for element in data_list:
+        if aproximate_hour in element['dt_txt']:
             weather = element['weather'][0]
             post = {
                 'title': parser.parse(element['dt_txt']).strftime('%A'),
@@ -112,4 +112,3 @@ def generateForecastPosts(data):
             }
             posts.append(post)
     return posts
- 

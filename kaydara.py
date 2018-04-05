@@ -1,9 +1,9 @@
-import os, sys, traceback, json, argparse, requests
+import traceback, json, argparse
 
-from datetime import datetime
 from Utils import FacebookAPI
 from Utils import OpenWeatherMapAPI
 from Utils import NewsAPI
+from Utils import NLP
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -13,13 +13,13 @@ app = Flask(__name__)
 # TO-DO: Move [VERIFY_TOKEN] to FacebookAPI.py
 def handle_verification():
     print('Handling Verification.')
-    if request.args.get('hub.mode') == 'subscribe' and request.args.get('hub.challenge'):  
+    if request.args.get('hub.mode') == 'subscribe' and request.args.get('hub.challenge'):
         if request.args.get('hub.verify_token') == FacebookAPI.VERIFY_TOKEN:
             print('Webhook verified.')
             return request.args.get('hub.challenge'), 200
         else:
             return 'Wrong verification token!', 403
-    return 'Kaydara is working.', 200  
+    return 'Kaydara is working.', 200
 
 @app.route('/', methods=['POST'])
 # Handling received messages
@@ -40,7 +40,7 @@ def handle_messages():
                 msg_type, response = processIncoming(sender_id, message)
                 FacebookAPI.show_typing(sender_id, 'typing_off')
 
-                if msg_type == 'weather_info': 
+                if msg_type == 'weather_info':
                     icon, title, subtitle = OpenWeatherMapAPI.generateCurrentWeatherInfo(response)
                     FacebookAPI.send_picture(sender_id, icon, title, subtitle)
 
@@ -49,18 +49,18 @@ def handle_messages():
                     FacebookAPI.send_list(sender_id, elements)
 
                 elif msg_type == 'forecast_info':
-                    #icon, title, subtitle = OpenWeatherMapAPI.generateForecastDay(response,'2018-04-07','14:00:00')    
+                    #icon, title, subtitle = OpenWeatherMapAPI.generateForecastDay(response,'2018-04-07','14:00:00')
                     #FacebookAPI.send_picture(sender_id, icon, title, subtitle)
                     elements = OpenWeatherMapAPI.generateForecastDay(response,'2018-04-08')
                     FacebookAPI.send_list(sender_id, elements)
-                    
+
                     #elements = OpenWeatherMapAPI.generateForecastDay(response,'2018-04-08', True)
                     #FacebookAPI.send_carousel(sender_id, elements)
 
                 elif msg_type == 'image':
                     FacebookAPI.send_message(sender_id, 'Received your image.')
-                    FacebookAPI.send_picture(sender_id, message['data'], 'Title', 'Subtitle')   
-                
+                    FacebookAPI.send_picture(sender_id, message['data'], 'Title', 'Subtitle')
+
                 elif msg_type == 'news':
                     FacebookAPI.send_message(sender_id, 'Received your news request.')
                     if not response:
@@ -71,7 +71,7 @@ def handle_messages():
 
                 else:
                     print('RESPONSE: ' + str(response))
-                    FacebookAPI.send_message(sender_id, response)
+                    NLP.process_message(sender_id, response)
 
             except Exception as e:
                 print('EXCEPTION ' + str(e))
@@ -79,11 +79,11 @@ def handle_messages():
                 #FacebookAPI.send_message(os.environ['PAGE_ACCESS_TOKEN'], sender_id, NLP.oneOf(NLP.error))
     return 'ok'
 
-def processIncoming(user_id, message): 
+def processIncoming(user_id, message):
     # Text message
     if message['type'] == 'text':
         message_text = message['data']
-        if 'news' in message_text: 
+        if 'news' in message_text:
             data = message_text.split()
             data = data[1:]
             return 'news', NewsAPI.getTopHeadlines(' '.join(data)) # combining multiple keywords
@@ -91,11 +91,11 @@ def processIncoming(user_id, message):
         elif 'weather in' in message_text: # usage: weather in <city>
             data = message_text.split()
             data = data[2:]
-            return 'weather_info', OpenWeatherMapAPI.getCurrentWeatherCity(' '.join(data)) 
+            return 'weather_info', OpenWeatherMapAPI.getCurrentWeatherCity(' '.join(data))
 
-        elif 'weather on' in message_text: # usage: weather on <city> 
+        elif 'weather on' in message_text: # usage: weather on <city>
             data = message_text.split()
-            data_splitted = data[2:] 
+            data_splitted = data[2:]
             return 'forecast_info', OpenWeatherMapAPI.getForecastCity(' '.join(data_splitted))
 
         elif 'forecast in' in message_text: # usage: forecast in <city>
@@ -106,19 +106,19 @@ def processIncoming(user_id, message):
         else:
             return 'text', message_text
 
-    # Location message type 
+    # Location message type
     elif message['type'] == 'location':
         coordinates = message['data']
-        response = OpenWeatherMapAPI.getCurrentWeatherCoordinates(coordinates['lat'], coordinates['long']) 
+        response = OpenWeatherMapAPI.getCurrentWeatherCoordinates(coordinates['lat'], coordinates['long'])
         return 'weather_info', response
 
-    # Image message type 
+    # Image message type
     elif message['type'] == 'image':
         image_url = message['data']
         #return "I've received your image: %s"%(image_url)
         return 'image', image_url
 
-    # Audio message type 
+    # Audio message type
     elif message['type'] == 'audio':
         audio_url = message['data']
         return 'audio', "I've received your audio: %s"%(audio_url)
@@ -126,23 +126,23 @@ def processIncoming(user_id, message):
     # Video message type
     elif message['type'] == 'video':
         video_url = message['data']
-        return 'video', "I've received your video: %s"%(video_url)  
+        return 'video', "I've received your video: %s"%(video_url)
 
     # File message type
     elif message['type'] == 'file':
         file_url = message['data']
-        return 'file', "I've received your file: %s"%(file_url)      
+        return 'file', "I've received your file: %s"%(file_url)
 
-    # Unrecognizable incoming 
+    # Unrecognizable incoming
     else:
         return None, "*scratch my head*"
 
 # Generate tuples of (sender_id, message_text) from the provided payload.
 # This part technically clean up received data to pass only meaningful data to processIncoming() function
-def messaging_events(payload): 
+def messaging_events(payload):
     data = json.loads(payload)
     messaging_events = data['entry'][0]['messaging']
-    
+
     for event in messaging_events:
         sender_id = event['sender']['id']
 
@@ -157,7 +157,7 @@ def messaging_events(payload):
 
         # Attachments
         elif 'attachments' in event['message']:
-            
+
             # Location
             if 'location' == event['message']['attachments'][0]['type']:
                 coordinates = event['message']['attachments'][0]['payload']['coordinates']
@@ -167,7 +167,7 @@ def messaging_events(payload):
             elif event['message']['attachments'][0]['type'] in ('audio', 'video', 'image', 'file'):
                 url = event['message']['attachments'][0]['payload']['url']
                 yield sender_id, {'type': event['message']['attachments'][0]['type'], 'data': url, 'message_id': event['message']['mid']}
-            
+
             else:
                 yield sender_id, {'type':'text','data':"I don't understand this [Attachment not verified]", 'message_id': event['message']['mid']}
 
@@ -175,16 +175,16 @@ def messaging_events(payload):
         elif 'quick_reply' in event['message']:
             data = event['message']['quick_reply']['payload']
             yield sender_id, {'type':'quick_reply','data': data, 'message_id': event['message']['mid']}
-        
+
         else:
             yield sender_id, {'type':'text','data':"I don't understand this! [Not verified]", 'message_id': event['message']['mid']}
 
 # Not used yet
 #def postback_events(payload):
 #    data = json.loads(payload)
-    
+
 #    postbacks = data["entry"][0]["messaging"]
-    
+
 #    for event in postbacks:
 #        sender_id = event["sender"]["id"]
 #        postback_payload = event["postback"]["payload"]
@@ -205,4 +205,3 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     app.run(port = args.port)
-    

@@ -24,15 +24,7 @@ def send_message(message,context):
 
     intents = dict_response['intents']
     entities = extract_entities(dict_response['entities'])
-    newContext = dict_response[u'context']
+    newContext = dict_response['context']
     output = dict_response['output']['text']
 
     return (intents, entities, newContext, output)
-
-"""
-if __name__ == '__main__':
-    (intent, entities, output) = send_message('hi Ricardo')
-    print(intent)
-    print(entities)
-    print(output)
-"""

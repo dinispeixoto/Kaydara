@@ -1,9 +1,9 @@
 import os
 import urllib.parse as urlparse
-from configparser import ConfigParser
+
 
 def config(filename='database.ini', section='postgresql'):
-    db = {} 
+    db = {}
 
     url = urlparse.urlparse(os.environ['DATABASE_URL'])
     db['database'] = url.path[1:]

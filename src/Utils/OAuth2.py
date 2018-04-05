@@ -6,8 +6,8 @@ from oauth2client import client, tools
 from oauth2client.file import Storage
 
 # only for tests
-import GmailAPI
-import CalendarAPI
+from src.APIs import GmailAPI
+from src.APIs import CalendarAPI
 import Utils
 
 SCOPES = Utils.gen_array(os.environ['GOOGLE_SCOPES'])

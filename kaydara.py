@@ -1,16 +1,16 @@
 import traceback, json, argparse
 
-from Utils import FacebookAPI
-from Utils import OpenWeatherMapAPI
-from Utils import NewsAPI
-from Utils import NLP
+from src.APIs import FacebookAPI
+from src.APIs import OpenWeatherMapAPI
+from src.APIs import NewsAPI
+from src.NLP import NLP
 from flask import Flask, request
 
 app = Flask(__name__)
 
-@app.route('/', methods=['GET'])
+
 # Handling webhook's verification: checking hub.verify_token and returning received hub.challenge
-# TO-DO: Move [VERIFY_TOKEN] to FacebookAPI.py
+@app.route('/', methods=['GET'])
 def handle_verification():
     print('Handling Verification.')
     if request.args.get('hub.mode') == 'subscribe' and request.args.get('hub.challenge'):
@@ -21,8 +21,9 @@ def handle_verification():
             return 'Wrong verification token!', 403
     return 'Kaydara is working.', 200
 
-@app.route('/', methods=['POST'])
+
 # Handling received messages
+@app.route('/', methods=['POST'])
 def handle_messages():
     payload = request.get_data()
     webhook_type = get_type_from_payload(payload)
@@ -34,108 +35,15 @@ def handle_messages():
             if not message:
                 return 'ok'
 
-            # Start processing valid requests -> TEMOS DE REESTRUTURAR ISTO!!! DEIXO PARA QUANDO IMPLEMENTARMOS O NLP
+            # Start processing valid requests
             try:
                 FacebookAPI.show_typing(sender_id)
-                msg_type, response = processIncoming(sender_id, message)
-                FacebookAPI.show_typing(sender_id, 'typing_off')
-
-                if msg_type == 'weather_info':
-                    icon, title, subtitle = OpenWeatherMapAPI.generateCurrentWeatherInfo(response)
-                    FacebookAPI.send_picture(sender_id, icon, title, subtitle)
-
-                elif msg_type == 'forecast_posts':
-                    elements = OpenWeatherMapAPI.generateForecastPosts(response)
-                    FacebookAPI.send_list(sender_id, elements)
-
-                elif msg_type == 'forecast_info':
-                    #icon, title, subtitle = OpenWeatherMapAPI.generateForecastDay(response,'2018-04-07','14:00:00')
-                    #FacebookAPI.send_picture(sender_id, icon, title, subtitle)
-                    elements = OpenWeatherMapAPI.generateForecastDay(response,'2018-04-08')
-                    FacebookAPI.send_list(sender_id, elements)
-
-                    #elements = OpenWeatherMapAPI.generateForecastDay(response,'2018-04-08', True)
-                    #FacebookAPI.send_carousel(sender_id, elements)
-
-                elif msg_type == 'image':
-                    FacebookAPI.send_message(sender_id, 'Received your image.')
-                    FacebookAPI.send_picture(sender_id, message['data'], 'Title', 'Subtitle')
-
-                elif msg_type == 'news':
-                    FacebookAPI.send_message(sender_id, 'Received your news request.')
-                    if not response:
-                        FacebookAPI.send_message(sender_id, 'Haven\'t found any news related to the given keyword.')
-                    else:
-                        elements = NewsAPI.generateNewsPosts(response)
-                        FacebookAPI.send_carousel(sender_id, elements)
-
-                else:
-                    print('RESPONSE: ' + str(response))
-                    NLP.process_message(sender_id, response)
-
+                NLP.process_message(sender_id, message['data'])
             except Exception as e:
                 print('EXCEPTION ' + str(e))
                 traceback.print_exc()
-                #FacebookAPI.send_message(os.environ['PAGE_ACCESS_TOKEN'], sender_id, NLP.oneOf(NLP.error))
+
     return 'ok'
-
-def processIncoming(user_id, message):
-    # Text message
-    if message['type'] == 'text':
-        message_text = message['data']
-        if 'news' in message_text:
-            data = message_text.split()
-            data = data[1:]
-            return 'news', NewsAPI.getTopHeadlines(' '.join(data)) # combining multiple keywords
-
-        elif 'weather in' in message_text: # usage: weather in <city>
-            data = message_text.split()
-            data = data[2:]
-            return 'weather_info', OpenWeatherMapAPI.getCurrentWeatherCity(' '.join(data))
-
-        elif 'weather on' in message_text: # usage: weather on <city>
-            data = message_text.split()
-            data_splitted = data[2:]
-            return 'forecast_info', OpenWeatherMapAPI.getForecastCity(' '.join(data_splitted))
-
-        elif 'forecast in' in message_text: # usage: forecast in <city>
-            data = message_text.split()
-            data = data[2:]
-            return 'forecast_posts', OpenWeatherMapAPI.getForecastCity(' '.join(data))
-
-        else:
-            return 'text', message_text
-
-    # Location message type
-    elif message['type'] == 'location':
-        coordinates = message['data']
-        response = OpenWeatherMapAPI.getCurrentWeatherCoordinates(coordinates['lat'], coordinates['long'])
-        return 'weather_info', response
-
-    # Image message type
-    elif message['type'] == 'image':
-        image_url = message['data']
-        #return "I've received your image: %s"%(image_url)
-        return 'image', image_url
-
-    # Audio message type
-    elif message['type'] == 'audio':
-        audio_url = message['data']
-        return 'audio', "I've received your audio: %s"%(audio_url)
-
-    # Video message type
-    elif message['type'] == 'video':
-        video_url = message['data']
-        return 'video', "I've received your video: %s"%(video_url)
-
-    # File message type
-    elif message['type'] == 'file':
-        file_url = message['data']
-        return 'file', "I've received your file: %s"%(file_url)
-
-    # Unrecognizable incoming
-    else:
-        return None, "*scratch my head*"
 
 # Generate tuples of (sender_id, message_text) from the provided payload.
 # This part technically clean up received data to pass only meaningful data to processIncoming() function
@@ -179,16 +87,19 @@ def messaging_events(payload):
         else:
             yield sender_id, {'type':'text','data':"I don't understand this! [Not verified]", 'message_id': event['message']['mid']}
 
+
 # Not used yet
-#def postback_events(payload):
-#    data = json.loads(payload)
+"""
+def postback_events(payload):
+    data = json.loads(payload)
 
-#    postbacks = data["entry"][0]["messaging"]
+    postbacks = data["entry"][0]["messaging"]
 
-#    for event in postbacks:
-#        sender_id = event["sender"]["id"]
-#        postback_payload = event["postback"]["payload"]
-#        yield sender_id, postback_payload
+    for event in postbacks:
+        sender_id = event["sender"]["id"]
+        postback_payload = event["postback"]["payload"]
+        yield sender_id, postback_payload
+"""
 
 # Returning payloads' type - currently only supporting 'message'
 def get_type_from_payload(payload):
@@ -197,6 +108,7 @@ def get_type_from_payload(payload):
         return 'message'
     if 'postback' in data['entry'][0]['messaging'][0]:
         return 'postback'
+
 
 # Allows running with simple `python kaydara <port>`
 if __name__ == '__main__':

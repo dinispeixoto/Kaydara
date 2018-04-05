@@ -15,7 +15,7 @@ def extract_entities(list):
     return entites
 
 # send the message and return the intent, entities and the response
-def send_message(message,context):
+def send_message(message, context):
     ASSISTANT.set_http_config({'timeout': 100})
     response = ASSISTANT.message(workspace_id = WORKSPACE_ID, input={'text': message }, context=context)
 

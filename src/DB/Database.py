@@ -1,4 +1,4 @@
-from Utils.db import Config
+from src.DB import Config
 import psycopg2
 
 

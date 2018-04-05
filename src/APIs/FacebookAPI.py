@@ -1,6 +1,6 @@
 import requests, json, os
 from flask import url_for
-from Utils import OpenWeatherMapAPI 
+from src.APIs import OpenWeatherMapAPI 
 
 # Environment variables on heroku
 VERIFY_TOKEN = os.environ['VERIFY_TOKEN']
@@ -15,26 +15,20 @@ def show_typing(user_id, action='typing_on'):
         'recipient': {'id': user_id},
         'sender_action': action
     })
-
-    response = requests.post('https://graph.facebook.com/v2.6/me/messages', params = params, headers = headers, data = data)
-    if response.status_code != response.ok:
-        print(response.status_code)
-        print(response.text)
+    __send(data)
 
 # Send text message
 def send_message(user_id, text):
+    show_typing(user_id,'typing_off')
     data = json.dumps({
         'recipient': {'id': user_id},
         'message': {'text': text}
     })
-
-    response = requests.post('https://graph.facebook.com/v2.6/me/messages', params = params, headers = headers, data = data)
-    if response.status_code != response.ok: 
-        print(response.status_code)
-        print(response.text)
+    __send(data)
 
 # Send picture
 def send_picture(user_id, imageUrl, title="", subtitle=""):
+    show_typing(user_id,'typing_off')    
     if title != "":
         data = json.dumps({
             "recipient": {"id": user_id},
@@ -65,14 +59,11 @@ def send_picture(user_id, imageUrl, title="", subtitle=""):
                     }
                 }
             })
-
-    response = requests.post("https://graph.facebook.com/v2.6/me/messages", params = params, data = data, headers = headers)
-    if response.status_code != response.ok:
-        print(response.status_code)
-        print(response.text)   
+    __send(data) 
 
 # Send trending news (carousel of generic templates)
 def send_carousel(user_id, elements):
+    show_typing(user_id,'typing_off')    
     data = json.dumps({
         'recipient': {'id': user_id},
         'message': {
@@ -85,13 +76,10 @@ def send_carousel(user_id, elements):
             }
         }
     })
-
-    response = requests.post("https://graph.facebook.com/v2.6/me/messages", params = params, data = data, headers = headers)
-    if response.status_code != response.ok:
-        print(response.status_code)
-        print(response.text)    
+    __send(data)  
 
 def send_list(user_id, elements, header_style = 'compact'):
+    show_typing(user_id,'typing_off')    
     data = json.dumps({
         'recipient': {'id': user_id},
         'message': {
@@ -105,8 +93,11 @@ def send_list(user_id, elements, header_style = 'compact'):
             }
         }
     })
+    __send(data) 
 
+
+def __send(data):
     response = requests.post("https://graph.facebook.com/v2.6/me/messages", params = params, data = data, headers = headers)
     if response.status_code != response.ok:
         print(response.status_code)
-        print(response.text)        
+        print(response.text)  

@@ -1,10 +1,8 @@
 import os
 import urllib.parse as urlparse
 
-
-def config(filename='database.ini', section='postgresql'):
+def config():
     db = {}
-
     url = urlparse.urlparse(os.environ['DATABASE_URL'])
     db['database'] = url.path[1:]
     db['user'] = url.username

@@ -103,5 +103,7 @@ kaydara_env
 # mypy
 .mypy_cache/
 
-# code 
+# code
 .vscode
+
+dados

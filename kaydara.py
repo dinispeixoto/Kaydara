@@ -4,6 +4,7 @@ from src.APIs import FacebookAPI
 from src.APIs import OpenWeatherMapAPI
 from src.APIs import NewsAPI
 from src.NLP import NLP
+from src.Utils import Multimedia
 from flask import Flask, request
 
 app = Flask(__name__)
@@ -38,12 +39,16 @@ def handle_messages():
             # Start processing valid requests
             try:
                 FacebookAPI.show_typing(sender_id)
-                NLP.process_message(sender_id, message['data'])
+                if message['type'] == 'text':
+                    NLP.process_message(sender_id, message['data'])
+                else:
+                    Multimedia.process_message(sender_id, message)
+                
             except Exception as e:
                 print('EXCEPTION ' + str(e))
                 traceback.print_exc()
-
     return 'ok'
+
 
 # Generate tuples of (sender_id, message_text) from the provided payload.
 # This part technically clean up received data to pass only meaningful data to processIncoming() function

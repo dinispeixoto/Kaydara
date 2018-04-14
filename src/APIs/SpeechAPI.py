@@ -15,9 +15,3 @@ def send_audio(audio):
     dict_response = json.loads(response_decoded)
 
     return dict_response['results'][0]['alternatives'][0]['transcript']
-
-"""
-if __name__ == '__main__':
-    transcript = send_audio('resources/')
-    print(transcript)
-"""

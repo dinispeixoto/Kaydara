@@ -21,6 +21,7 @@ def process_message(results, cli):
 
 def send_news(context, cli):
     news = NewsAPI.getTopHeadlines(context['keyword'])
+    print('News: ' + str(news))
     elements = NewsMB.generateNewsPosts(news)
     FacebookAPI.send_carousel(cli.id, elements)
     Client.update_client_context(cli.id, None)

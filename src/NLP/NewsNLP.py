@@ -15,7 +15,7 @@ def process_message(results, cli):
     for m in output:
         if m == '[OK] Process request':
             send_news(newContext, cli)
-        elif m == '':
+        elif m != '':
             FacebookAPI.send_message(cli.id, m)
 
 

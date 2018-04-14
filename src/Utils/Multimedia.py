@@ -1,5 +1,7 @@
 from src.APIs import FacebookAPI
 from src.APIs import OpenWeatherMapAPI as WeatherAPI
+from src.APIs import SpeechAPI
+from src.NLP import NLP
 from src.MsgBuilder import WeatherMB
 from src.Models import Client
 
@@ -14,10 +16,12 @@ def process_message(user_id, message):
         image_url = message['data']
         FacebookAPI.send_picture(user_id,image_url)
 
-    # Audio message type TODO
+    # Audio message type
     elif message['type'] == 'audio':
         audio_url = message['data']
-        FacebookAPI.send_message(user_id, "I've received your audio: %s"%(audio_url))
+        response = SpeechAPI.send_audio(audio_url)
+        FacebookAPI.send_message(user_id,"I understood: " + response) # TODO remove this (just to see the results)
+        NLP.process_message(user_id, response)        
 
     # Video message type TODO
     elif message['type'] == 'video':

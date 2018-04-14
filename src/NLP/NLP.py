@@ -23,7 +23,11 @@ def __selectAPI(results, cli):
         'WeatherRequest': WeatherNLP.process_message,
         'NewsRequest': NewsNLP.process_message,
     }
-    switch_request.get(newContext['node'], __invalid_request)(results, cli)
+    try:
+        node = newContext['node']
+    except KeyError:
+        node = 'AnythingElse'
+    switch_request.get(node, __invalid_request)(results, cli)
 
 # method deals with invalid request
 def __invalid_request(results, cli):

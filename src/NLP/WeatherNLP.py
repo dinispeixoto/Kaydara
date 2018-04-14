@@ -3,7 +3,7 @@ from src.APIs import FacebookAPI
 from src.APIs import OpenWeatherMapAPI as WeatherAPI
 from src.MsgBuilder import WeatherMB
 from src.Models import Client
-import json
+import json, datetime
 
 
 def process_message(results, cli):
@@ -30,7 +30,16 @@ def simple_forecast(context, cli, hour=False):
         icon, title, subtitle = WeatherMB.generateSimpleForecastDay(prevision, context['date'], context['time'])
         FacebookAPI.send_picture(cli.id, icon, title, subtitle)
     else:
-        elements = WeatherMB.generateForecastDay(prevision, context['date'], True)
+        current_day = datetime.date.today().strftime('%y-%m-%d')
+        current_hour = datetime.datetime.now().strftime('%H')
+
+        if current_day in context['date']:
+            if current_hour < '03:00:00':
+                elements = WeatherMB.generateForecastDay(prevision, context['date'])
+            else:
+                elements = WeatherMB.generateForecastDay(prevision, context['date'], True) 
+        else:
+            elements = WeatherMB.generateForecastDay(prevision, context['date'])
         FacebookAPI.send_list(cli.id, elements)
     Client.update_client_context(cli.id, None)
 

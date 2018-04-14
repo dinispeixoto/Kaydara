@@ -44,13 +44,14 @@ def generateSimpleForecastDay(data, date, hour):
             return icon_url, title, subtitle
 
 # Generate full forecast for specific day.
-# Hours: 6:00, 12:00, 18:00, 00:00
+# Hours: 3:00, 9:00, 15:00, 21:00
 def generateForecastDay(data, date, showAll = False):
     posts = []
+
     data_list = data['list']
     for element in data_list:
-        if date in element['dt_txt']:
-            if showAll or (not showAll and ('03:00:00' in element['dt_txt'] or '09:00:00' in element['dt_txt'] or '15:00:00' in element['dt_txt'] or '21:00:00' in element['dt_txt'])):
+        if date in element['dt_txt'] or len(posts) < 4:
+            if showAll or date not in element['dt_txt'] or (not showAll and ('03:00:00' in element['dt_txt'] or '09:00:00' in element['dt_txt'] or '15:00:00' in element['dt_txt'] or '21:00:00' in element['dt_txt'])):
                 weather = element['weather'][0]
                 post = {
                     'title': parser.parse(element['dt_txt']).strftime('%H:%M'),

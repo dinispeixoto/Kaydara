@@ -28,7 +28,7 @@ def process_message(results, cli):
 
 
 def current_weather(context, cli):
-    prevision = WeatherAPI.getForecastCity(context['location'])
+    prevision = WeatherAPI.getCurrentWeatherCity(context['location'])
     icon, title, subtitle = WeatherMB.generateCurrentWeatherInfo(prevision)
     FacebookAPI.send_picture(cli.id, icon, title, subtitle)
 

@@ -1,13 +1,19 @@
-import traceback, json, argparse
+import traceback, json, argparse, os
+import google.oauth2.credentials
+import google_auth_oauthlib.flow
+import googleapiclient.discovery
 
-from src.APIs import FacebookAPI
-from src.APIs import OpenWeatherMapAPI
-from src.APIs import NewsAPI
+from src.APIs import FacebookAPI, OpenWeatherMapAPI, NewsAPI
 from src.NLP import NLP
-from src.Utils import Multimedia
-from flask import Flask, request
+from src.Utils import Multimedia, Utils
+from flask import Flask, request, session, url_for, redirect 
+from src.Models import Session 
 
 app = Flask(__name__)
+app.secret_key = os.environ['SECRET_KEY']
+
+SCOPES = Utils.gen_array(os.environ['SCOPES'])
+CLIENT_SECRET_FILE = os.environ['CLIENT_SECRET_FILE']
 
 
 # Handling webhook's verification: checking hub.verify_token and returning received hub.challenge
@@ -48,6 +54,49 @@ def handle_messages():
                 print('EXCEPTION ' + str(e))
                 traceback.print_exc()
     return 'ok'
+
+
+# Handling the requests for authorisation 
+@app.route('/authorize')
+def authorize():
+    payload = request.args
+    client_id = payload.get('id')
+    
+    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+        CLIENT_SECRET_FILE, scopes=SCOPES)
+
+    flow.redirect_uri = url_for('oauth2callback', _external=True)
+
+    authorization_url, state = flow.authorization_url(
+        access_type='offline',
+        include_granted_scopes='true')
+
+    session['state'] = state
+    session['client_id'] = client_id
+
+    return redirect(authorization_url)
+
+
+# Handling the OAuth2 credentials 
+@app.route('/oauth2callback')
+def oauth2callback():
+    state = session['state']
+    client_id = session['client_id']
+
+    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+        CLIENT_SECRET_FILE, scopes=SCOPES, state=state)
+    flow.redirect_uri = url_for('oauth2callback', _external=True)
+
+    authorization_response = request.url
+    flow.fetch_token(authorization_response=authorization_response)
+
+    credentials = flow.credentials
+    Session.insert_session(client_id, state, credentials)
+
+    FacebookAPI.send_message(client_id, 'You are logged in =D')
+    NLP.process_message(client_id, 'Send an email')
+
+    return '<h1>Login succeeded.</h1><br><h3>Back to the Messenger!</h3>', 200
 
 
 # Generate tuples of (sender_id, message_text) from the provided payload.
@@ -105,6 +154,7 @@ def postback_events(payload):
         postback_payload = event["postback"]["payload"]
         yield sender_id, postback_payload
 """
+
 
 # Returning payloads' type - currently only supporting 'message'
 def get_type_from_payload(payload):

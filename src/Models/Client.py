@@ -6,16 +6,19 @@ class Client():
         self.id = id
         self.context = context
 
+
 def insert_client(id, context):
     db = Database()
     db.query_params('INSERT INTO clients (facebook_id, client_context) VALUES (%s, %s)', (id, context,))
     db.close()
     return Client(id, context)
 
+
 def update_client_context(id, context):
     db = Database()
     db.query_params('UPDATE clients SET client_context = %s WHERE facebook_id = %s', (context, id,))
     db.close()
+
 
 def get_client(id):
     db = Database()

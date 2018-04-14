@@ -17,6 +17,7 @@ def process_message(client_id, msg):
 # method select the correct API and deals with invalid request
 def __selectAPI(results, cli):
     (_,_,newContext,output) = results
+    print(newContext)
 
     switch_request = {
         'WeatherRequest': WeatherNLP.process_message,

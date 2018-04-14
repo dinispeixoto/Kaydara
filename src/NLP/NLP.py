@@ -18,7 +18,7 @@ def process_message(client_id, msg):
 def __selectAPI(results, cli):
     (_,_,newContext,output) = results
     print(newContext)
-
+    print(output)
     switch_request = {
         'WeatherRequest': WeatherNLP.process_message,
         'NewsRequest': NewsNLP.process_message,

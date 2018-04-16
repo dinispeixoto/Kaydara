@@ -1,4 +1,3 @@
-from src.APIs import IBMWatsonAPI
 from src.APIs import FacebookAPI
 from src.APIs import OpenWeatherMapAPI as WeatherAPI
 from src.MsgBuilder import WeatherMB
@@ -14,14 +13,24 @@ def process_message(results, cli):
     Client.update_client_context(cli.id, json_newContext)
 
     for m in output:
-        FacebookAPI.send_message(cli.id, m)
-        if m == 'I got you!':
-            if newContext['date'] is None:
-                next_days_forecast(newContext, cli)
+        if m == '[OK] Process request':
+            if newContext['date'] is None and newContext['time'] is None:
+                if newContext['type'] == 'weather':
+                    current_weather(newContext, cli)
+                elif newContext['type'] == 'forecast':
+                    next_days_forecast(newContext, cli)
             elif newContext['time'] is not None:
                 simple_forecast(newContext, cli, True)
             else:
                 simple_forecast(newContext, cli)
+        elif m != '':
+            FacebookAPI.send_message(cli.id, m)
+
+
+def current_weather(context, cli):
+    prevision = WeatherAPI.getCurrentWeatherCity(context['location'])
+    icon, title, subtitle = WeatherMB.generateCurrentWeatherInfo(prevision)
+    FacebookAPI.send_picture(cli.id, icon, title, subtitle)
 
 
 def simple_forecast(context, cli, hour=False):
@@ -37,7 +46,7 @@ def simple_forecast(context, cli, hour=False):
             if current_hour < '03:00:00':
                 elements = WeatherMB.generateForecastDay(prevision, context['date'])
             else:
-                elements = WeatherMB.generateForecastDay(prevision, context['date'], True) 
+                elements = WeatherMB.generateForecastDay(prevision, context['date'], True)
         else:
             elements = WeatherMB.generateForecastDay(prevision, context['date'])
         FacebookAPI.send_list(cli.id, elements)

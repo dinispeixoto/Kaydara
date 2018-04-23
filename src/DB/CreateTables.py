@@ -4,7 +4,8 @@ def create_tables(db):
     db.query('CREATE TABLE IF NOT EXISTS clients (' + 
              'client_id SERIAL PRIMARY KEY, ' +
              'facebook_id BIGINT NOT NULL, ' + 
-             'client_context VARCHAR(1024));')
+             'client_context VARCHAR(1024), '+
+             'last_message VARCHAR(128));')
 
     db.query('CREATE TABLE IF NOT EXISTS sessions (' +
              'id SERIAL PRIMARY KEY, '

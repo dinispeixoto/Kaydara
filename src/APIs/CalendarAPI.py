@@ -14,17 +14,9 @@ def list_events(service, num_events):
                                  timeMin=now,                                   # since...
                                  maxResults=num_events)                         # get the "num_events" next events
                            .execute())                                        
-    
     events = eventsResult.get('items', [])
-    return __get_events(events)
+    return events
 
-# extract events from json 
-def __get_events(events_json):
-    events_list = []
-    for event in events_json:
-        start = event['start'].get('dateTime', event['start'].get('date'))
-        events_list.append(start + " : " + event['summary'])
-    return events_list
 
 # regist a new event in Calendar 
 def regist_event(service, event):

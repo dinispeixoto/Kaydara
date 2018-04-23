@@ -2,7 +2,7 @@ from src.APIs import FacebookAPI, OpenWeatherMapAPI, NewsAPI, SchedulerAPI
 from src.NLP import NLP
 from src.Utils import Multimedia, Utils
 from flask import Flask, request, session, url_for, redirect 
-from src.Models import Session 
+from src.Models import Session, Client
 
 import traceback, json, argparse, os
 import google.oauth2.credentials
@@ -94,7 +94,8 @@ def oauth2callback():
     Session.insert_session(client_id, state, credentials)
 
     FacebookAPI.send_message(client_id, 'You are logged in =D')
-    NLP.process_message(client_id, 'Send an email')
+    cli = Client.get_client(client_id)
+    NLP.process_message(client_id, cli.last_msg)
 
     return '<h1>Login succeeded.</h1><br><h3>Back to the Messenger!</h3>', 200
 

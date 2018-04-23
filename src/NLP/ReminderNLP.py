@@ -7,7 +7,7 @@ import json
 
 def process_message(results, cli):
     print('REMINDER REQUEST')
-    (_, _, context, output) = results
+    (context, output, _) = results
 
     json_context = json.dumps(context, indent=2)
     Client.update_client_context(cli.id, json_context)

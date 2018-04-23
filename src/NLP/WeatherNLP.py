@@ -6,7 +6,7 @@ import json, datetime
 
 def process_message(results, cli):
     print('WEATHER REQUEST')
-    (intents, entities, newContext, output) = results
+    (newContext, output, message) = results
 
     json_newContext = json.dumps(newContext, indent=2)
     Client.update_client_context(cli.id, json_newContext)

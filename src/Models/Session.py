@@ -33,6 +33,17 @@ def insert_session(id, state, credentials):
         credentials.client_secret,))
     db.close()
 
+def update_session(id, credentials):
+    db = Database()
+    db.query_params('UPDATE sessions SET '+
+        'token = %s, token_uri = %s, ' + 
+        'client_id = %s, client_secret = %s '+
+        'WHERE facebook_id = %s',
+        (credentials.token,
+        credentials.token_uri,
+        credentials.client_id,
+        credentials.client_secret,id,))
+    db.close()
 
 def get_session(id):
     db = Database()

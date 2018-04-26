@@ -77,3 +77,11 @@ def generateForecastPosts(data):
             }
             posts.append(post)
     return posts
+
+def quick_reply_location():
+    return [
+                {
+                    "content_type":"location"
+                }
+            ]
+    

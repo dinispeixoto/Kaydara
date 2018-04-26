@@ -1,6 +1,6 @@
 from src.APIs import FacebookAPI, OpenWeatherMapAPI, NewsAPI, SchedulerAPI
-from src.NLP import NLP
-from src.Utils import Multimedia, Utils
+from src.NLP import NLP, Multimedia
+from src.Utils import Utils
 from flask import Flask, request, session, url_for, redirect 
 from src.Models import Session, Client
 
@@ -42,17 +42,21 @@ def handle_messages():
             if not message:
                 return 'ok'
 
+            print(f'Received : {json.dumps(message, indent=4)}')
             # Start processing valid requests
             try:
                 FacebookAPI.show_typing(sender_id)
                 if message['type'] == 'text':
                     NLP.process_message(sender_id, message['data'])
+                elif message['type'] == 'quick_reply':
+                    NLP.process_quick_reply(sender_id, message['data'])
                 else:
                     Multimedia.process_message(sender_id, message)
                 
             except Exception as e:
                 print('EXCEPTION ' + str(e))
                 traceback.print_exc()
+
     return 'ok'
 
 
@@ -144,7 +148,6 @@ def messaging_events(payload):
 
 
 # Not used yet
-"""
 def postback_events(payload):
     data = json.loads(payload)
 
@@ -154,7 +157,6 @@ def postback_events(payload):
         sender_id = event["sender"]["id"]
         postback_payload = event["postback"]["payload"]
         yield sender_id, postback_payload
-"""
 
 
 # Returning payloads' type - currently only supporting 'message'

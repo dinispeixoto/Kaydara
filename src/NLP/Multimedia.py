@@ -7,7 +7,8 @@ def process_message(user_id, message):
     # Location message type
     if message['type'] == 'location':
         coordinates = message['data']
-        __select_action(user_id, coordinates['lat'], coordinates['long'])
+        #__select_action(user_id, coordinates['lat'], coordinates['long'])
+        NLP.process_message(user_id, f"coord({coordinates['lat']},{coordinates['long']})")
 
     # Image message type TODO
     elif message['type'] == 'image':
@@ -36,15 +37,15 @@ def process_message(user_id, message):
         FacebookAPI.send_message(user_id, 'What?')
 
 
-# select the action related to user context 
-def __select_action(user_id, lat, long):
-    client = Client.get_client(user_id)
+# select the action related to user context -> NOT USED
+#def __select_action(user_id, lat, long):
+#    client = Client.get_client(user_id)
     
     # handling a weather request with the localization 
-    if client.context['node'] == 'WeatherRequest':
-        response = WeatherAPI.getCurrentWeatherCoordinates(lat, long)
-        icon, title, subtitle = WeatherMB.generateCurrentWeatherInfo(response)
-        FacebookAPI.send_picture(user_id, icon, title, subtitle)
+#    if client.context['node'] == 'WeatherRequest':
+#        response = WeatherAPI.getCurrentWeatherCoordinates(lat, long)
+#        icon, title, subtitle = WeatherMB.generateCurrentWeatherInfo(response)
+#        FacebookAPI.send_picture(user_id, icon, title, subtitle)
     
-    else:
-        FacebookAPI.send_message(user_id, 'I know where you are :)')
+#    else:
+#        FacebookAPI.send_message(user_id, 'I know where you are :)')

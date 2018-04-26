@@ -6,34 +6,47 @@ import json, datetime
 
 def process_message(results, cli):
     print('WEATHER REQUEST')
-    (newContext, output, message) = results
+    (context, output, message) = results
 
-    json_newContext = json.dumps(newContext, indent=2)
-    Client.update_client_context(cli.id, json_newContext)
+    json_context = json.dumps(context, indent=2)
+    Client.update_client_context(cli.id, json_context)
 
     for m in output:
         if m == '[OK] Process request':
-            if newContext['date'] is None and newContext['time'] is None:
-                if newContext['type'] == 'weather':
-                    current_weather(newContext, cli)
-                elif newContext['type'] == 'forecast':
-                    next_days_forecast(newContext, cli)
-            elif newContext['time'] is not None:
-                simple_forecast(newContext, cli, True)
+            print(f"LOCATION = {context['location']}")
+            coordinates = (context['location'] == ' or coordinates')
+            if not coordinates:
+                context['location'] = process_keyword(context['location']) 
+                print(f"LOCATION = {context['location']}")
+
+            if context['date'] is None and context['time'] is None:
+                if context['type'] == 'weather':
+                    current_weather(context, cli, coordinates)
+                elif context['type'] == 'forecast':
+                    next_days_forecast(context, cli, coordinates)
+            elif context['time'] is not None:
+                simple_forecast(context, cli, coordinates, True)
             else:
-                simple_forecast(newContext, cli)
+                simple_forecast(context, cli, coordinates)
+        elif m == 'Can you give me a location?':
+            FacebookAPI.send_quick_replies(cli.id, WeatherMB.quick_reply_location(), m)
         elif m != '':
             FacebookAPI.send_message(cli.id, m)
 
-
-def current_weather(context, cli):
-    prevision = WeatherAPI.getCurrentWeatherCity(context['location'])
+def current_weather(context, cli, coordinates):
+    if coordinates:
+        prevision = WeatherAPI.getCurrentWeatherCoordinates(context['lat'], context['long'])
+    else:
+        prevision = WeatherAPI.getCurrentWeatherCity(context['location'])
     icon, title, subtitle = WeatherMB.generateCurrentWeatherInfo(prevision)
     FacebookAPI.send_picture(cli.id, icon, title, subtitle)
 
+def simple_forecast(context, cli, coordinates, hour=False):
+    if coordinates:
+        prevision = WeatherAPI.getForecastCoordinates(context['lat'], context['long'])
+    else:
+        prevision = WeatherAPI.getForecastCity(context['location'])
 
-def simple_forecast(context, cli, hour=False):
-    prevision = WeatherAPI.getForecastCity(context['location'])
     if hour:
         icon, title, subtitle = WeatherMB.generateSimpleForecastDay(prevision, context['date'], context['time'])
         FacebookAPI.send_picture(cli.id, icon, title, subtitle)
@@ -52,8 +65,17 @@ def simple_forecast(context, cli, hour=False):
     Client.update_client_context(cli.id, None)
 
 
-def next_days_forecast(context, cli):
-    prevision = WeatherAPI.getForecastCity(context['location'])
+def next_days_forecast(context, cli, coordinates):
+    if coordinates:
+        prevision = WeatherAPI.getForecastCoordinates(context['lat'], context['long'])
+    else:
+        prevision = WeatherAPI.getForecastCity(context['location'])
     elements = WeatherMB.generateForecastPosts(prevision)
     FacebookAPI.send_list(cli.id, elements)
     Client.update_client_context(cli.id, None)
+
+def process_keyword(keyword):
+    if keyword:
+        return ' '.join(i for i in keyword.split() if i != 'or')
+    else:
+        return None

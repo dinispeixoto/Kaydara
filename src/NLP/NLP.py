@@ -1,5 +1,6 @@
 from src.APIs import IBMWatsonAPI, FacebookAPI
 from src.NLP import ReminderNLP, WeatherNLP, NewsNLP, GmailNLP, CalendarNLP
+from src.MsgBuilder import NLPMB
 from src.Models import Client
 
 import json
@@ -14,6 +15,14 @@ def process_message(client_id, msg):
     print(results)
     __selectAPI(results, cli)
 
+# process a received quick_reply
+def process_quick_reply(client_id, quick_reply):
+    cli = Client.get_client(client_id)
+    if cli is None:
+        cli = Client.insert_client(client_id, None)    
+
+    results = IBMWatsonAPI.send_message(quick_reply, cli.context)
+    __selectAPI(results, cli)    
 
 # method select the correct API and deals with invalid request
 def __selectAPI(results, cli):
@@ -44,3 +53,5 @@ def __invalid_request(results, cli):
 
     for m in output:
         FacebookAPI.send_message(cli.id, m)
+
+    FacebookAPI.send_quick_replies(cli.id, NLPMB.quick_reply_features(), "Here's all the features, enjoy!")

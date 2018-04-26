@@ -96,6 +96,25 @@ def send_list(user_id, elements, header_style = 'compact'):
     })
     __send(data) 
 
+def send_quick_replies(user_id, quick_replies, text = None):
+    show_typing(user_id,'typing_off')
+    if text:
+        data = json.dumps({
+            'recipient': {'id': user_id},
+            'message': {
+                'text': text,
+                'quick_replies': quick_replies
+            }
+        })
+    else:  
+        data = json.dumps({
+            'recipient': {'id': user_id},
+            'message': {
+                'quick_replies': quick_replies
+            }
+        })  
+    __send(data)
+
 
 def __send(data):
     response = requests.post("https://graph.facebook.com/v2.6/me/messages", params = params, data = data, headers = headers)

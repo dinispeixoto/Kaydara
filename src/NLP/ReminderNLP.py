@@ -20,11 +20,12 @@ def process_message(results, cli):
             print(datetime)
             
             SchedulerAPI.schedule_remind(datetime, cli.id, word, description)
-            FacebookAPI.send_message(cli.id, f'I received your request to remind you {word} {description} at {datetime}.')
+            FacebookAPI.send_message(cli.id, f'I received your request to remind you {word} {description}at {datetime}.')
             Client.update_client_context(cli.id, None)
             cli.context = None
         elif m != '':
             FacebookAPI.send_message(cli.id, m)        
 
 def send_reminder(cli, word, description):
+    # add 2 quick replies here, send_quick_reply (text = ...)
     FacebookAPI.send_message(cli, ReminderMB.getDescription(word, description))

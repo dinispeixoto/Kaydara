@@ -1,13 +1,9 @@
 from __future__ import print_function
-import httplib2
-import os
-import base64
-import mimetypes
-import datetime
-
 from googleapiclient.discovery import build
 from oauth2client import client, tools
 from oauth2client.file import Storage
+
+import httplib2, os, base64, mimetypes, datetime
 
 # list the N next events 
 # TODO must be generic 

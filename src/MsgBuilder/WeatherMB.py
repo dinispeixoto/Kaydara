@@ -1,7 +1,6 @@
-import json, os
-from src.APIs import FacebookAPI
 from flask import url_for
 from dateutil import parser
+import json, os
 
 """
 Module where we build a perfect message to the client

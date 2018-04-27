@@ -1,6 +1,7 @@
-import os, json, re
 from flask import url_for
 from newsapi import NewsApiClient
+
+import os, json, re
 
 # Environment variable on heroku
 NEWS_API_KEY = os.environ['NEWS_API_KEY']

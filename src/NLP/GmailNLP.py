@@ -1,15 +1,14 @@
-import json
-import google.oauth2.credentials
-import google_auth_oauthlib.flow
-import googleapiclient.discovery
 from flask import session
-
-from src.APIs import FacebookAPI
-from src.APIs import GmailAPI
+from src.APIs import FacebookAPI, GmailAPI
 from src.MsgBuilder import GmailMB
 from src.Models import Client
 from src.Utils import Utils
 from src.Models import Session
+
+import json
+import google.oauth2.credentials
+import google_auth_oauthlib.flow
+import googleapiclient.discovery
 
 
 def process_message(results, cli):

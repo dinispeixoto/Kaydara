@@ -1,5 +1,3 @@
-import base64
-
 from src.APIs import FacebookAPI
 from flask import url_for
 from src.Utils import Utils
@@ -9,6 +7,8 @@ from email.mime.text import MIMEText
 from email.mime.image import MIMEImage
 from email.mime.audio import MIMEAudio
 from email.mime.base import MIMEBase
+
+import base64
 
 # generate the login 
 def generate_login(user_id):

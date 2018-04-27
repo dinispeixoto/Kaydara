@@ -1,7 +1,7 @@
-from src.APIs import FacebookAPI
-from src.APIs import NewsAPI
+from src.APIs import FacebookAPI, NewsAPI
 from src.MsgBuilder import NewsMB
 from src.Models import Client
+
 import json
 
 IRRELEVANT_WORDS = ['news', 'articles', 'most', 'recent', 'trending', 'new']

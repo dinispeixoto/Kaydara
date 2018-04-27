@@ -1,11 +1,9 @@
 from __future__ import print_function
-import httplib2
-import os
-import mimetypes
-
 from googleapiclient.discovery import build
 from oauth2client import client, tools
 from oauth2client.file import Storage
+
+import httplib2, os, base64, mimetypes
 
 # send the email
 def send_mail(service, user_id, message):

@@ -1,6 +1,7 @@
-import requests, json, os
 from flask import url_for
 from src.APIs import OpenWeatherMapAPI 
+
+import requests, json, os
 
 # Environment variables on heroku
 VERIFY_TOKEN = os.environ['VERIFY_TOKEN']

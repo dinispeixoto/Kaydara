@@ -1,4 +1,3 @@
-from src.APIs import FacebookAPI
 """
 Module where we build a perfect message to the client
 """

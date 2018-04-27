@@ -1,5 +1,6 @@
-import json
 from src.DB.Database import Database
+
+import json
 
 class Client():
     def __init__(self, id, context):

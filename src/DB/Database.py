@@ -1,6 +1,6 @@
 from src.DB import Config
-import psycopg2
 
+import psycopg2
 
 class Database():
     def __init__(self):

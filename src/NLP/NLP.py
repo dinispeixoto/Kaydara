@@ -1,11 +1,8 @@
-import json
-
-from src.APIs import IBMWatsonAPI
-from src.APIs import FacebookAPI
-from src.NLP import WeatherNLP
-from src.NLP import NewsNLP
-from src.NLP import GmailNLP
+from src.APIs import IBMWatsonAPI, FacebookAPI
+from src.NLP import ReminderNLP, WeatherNLP, NewsNLP, GmailNLP
 from src.Models import Client
+
+import json
 
 # processes the client message and select the related API
 def process_message(client_id, msg):
@@ -24,6 +21,7 @@ def __selectAPI(results, cli):
         'WeatherRequest': WeatherNLP.process_message,
         'NewsRequest': NewsNLP.process_message,
         'EmailRequest': GmailNLP.process_message,
+        'ReminderRequest': ReminderNLP.process_message,
     }
     try:
         node = newContext['node']

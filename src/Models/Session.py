@@ -1,6 +1,7 @@
-import json, os
 from src.DB.Database import Database
 from src.Utils import Utils
+
+import json, os
 
 SCOPES = Utils.gen_array(os.environ['SCOPES'])
 

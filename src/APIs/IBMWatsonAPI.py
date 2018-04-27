@@ -1,4 +1,5 @@
 from watson_developer_cloud import AssistantV1
+
 import json, os
 
 WORKSPACE_ID = os.environ['WORKSPACE_ID']

@@ -1,6 +1,4 @@
-from src.APIs import FacebookAPI
-from src.APIs import OpenWeatherMapAPI as WeatherAPI
-from src.APIs import SpeechAPI
+from src.APIs import OpenWeatherMapAPI as WeatherAPI, FacebookAPI, SpeechAPI
 from src.NLP import NLP
 from src.MsgBuilder import WeatherMB
 from src.Models import Client

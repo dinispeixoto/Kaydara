@@ -1,9 +1,8 @@
-from src.APIs import FacebookAPI
-from src.APIs import OpenWeatherMapAPI as WeatherAPI
+from src.APIs import OpenWeatherMapAPI as WeatherAPI, FacebookAPI
 from src.MsgBuilder import WeatherMB
 from src.Models import Client
-import json, datetime
 
+import json, datetime
 
 def process_message(results, cli):
     print('WEATHER REQUEST')

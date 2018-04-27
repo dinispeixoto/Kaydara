@@ -1,20 +1,20 @@
-import traceback, json, argparse, os
-import google.oauth2.credentials
-import google_auth_oauthlib.flow
-import googleapiclient.discovery
-
-from src.APIs import FacebookAPI, OpenWeatherMapAPI, NewsAPI
+from src.APIs import FacebookAPI, OpenWeatherMapAPI, NewsAPI, SchedulerAPI
 from src.NLP import NLP
 from src.Utils import Multimedia, Utils
 from flask import Flask, request, session, url_for, redirect 
 from src.Models import Session 
+
+import traceback, json, argparse, os
+import google.oauth2.credentials
+import google_auth_oauthlib.flow
+import googleapiclient.discovery
 
 app = Flask(__name__)
 app.secret_key = os.environ['SECRET_KEY']
 
 SCOPES = Utils.gen_array(os.environ['SCOPES'])
 CLIENT_SECRET_FILE = os.environ['CLIENT_SECRET_FILE']
-
+SchedulerAPI.init_scheduler()
 
 # Handling webhook's verification: checking hub.verify_token and returning received hub.challenge
 @app.route('/', methods=['GET'])
@@ -172,3 +172,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     app.run(port = args.port)
+

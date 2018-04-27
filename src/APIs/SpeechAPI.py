@@ -1,5 +1,6 @@
-import os, json, requests, urllib
 from pydub import AudioSegment
+
+import os, json, requests, urllib
 
 # Environment variables on heroku
 USERNAME = os.environ['SPEECH_USERNAME']

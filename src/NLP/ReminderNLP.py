@@ -15,12 +15,16 @@ def process_message(results, cli):
     for m in output:
         if m == '[OK] Process request':
             datetime = f"{context['date']} {context['time']}"
-            description = 'INSERT REMINDER DESCRIPTION HERE'
+            word = context['word']
+            description = context['description']
             print(datetime)
             
-            SchedulerAPI.schedule_remind(datetime, cli.id, description)
+            SchedulerAPI.schedule_remind(datetime, cli.id, word, description)
+            FacebookAPI.send_message(cli.id, f'I received your request to remind you {word} {description} at {datetime}.')
+            Client.update_client_context(cli.id, None)
+            cli.context = None
         elif m != '':
-            FacebookAPI.send_message(cli.id, m)
+            FacebookAPI.send_message(cli.id, m)        
 
-def send_reminder(cli, description):
-    FacebookAPI.send_message(cli, ReminderMB.getDescription(description))
+def send_reminder(cli, word, description):
+    FacebookAPI.send_message(cli, ReminderMB.getDescription(word, description))

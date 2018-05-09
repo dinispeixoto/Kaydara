@@ -12,5 +12,5 @@ def init_scheduler():
     scheduler.start()
 
 # Schedule a reminder
-def schedule_remind(date, user, description):
-    scheduler.add_job(ReminderNLP.send_reminder, 'date', run_date = date, args=[user, description])
+def schedule_remind(date, user, word, description):
+    scheduler.add_job(ReminderNLP.send_reminder, 'date', run_date = date, args=[user, word, description])

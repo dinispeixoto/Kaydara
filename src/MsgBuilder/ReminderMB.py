@@ -1,2 +1,2 @@
-def getDescription(description):
-    return f'You asked me to remind you [to/about] {description}.'
+def getDescription(word, description):
+    return f'You asked me to remind you {word} {description}.'

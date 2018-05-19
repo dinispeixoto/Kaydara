@@ -11,7 +11,7 @@ def process_message(results, cli):
 
     json_context = json.dumps(context, indent=2)
     Client.update_client_context(cli.id, json_context)
-    
+
     for m in output:
         if m == '[OK] Process request':
             datetime = f"{context['date']} {context['time']}"
@@ -20,12 +20,19 @@ def process_message(results, cli):
             print(datetime)
             
             SchedulerAPI.schedule_remind(datetime, cli.id, word, description)
-            FacebookAPI.send_message(cli.id, f'I received your request to remind you {word} {description}at {datetime}.')
+            if context['flag'] == 'schedule':
+                FacebookAPI.send_message(cli.id, f'I received your request to remind you {word} {description}{ReminderMB.getDatetimeDescription(datetime)}.')
+            elif context['flag'] == 'reschedule':
+                FacebookAPI.send_message(cli.id, f'I\'ll remind you {word} {description}{ReminderMB.getDatetimeDescription(datetime)} then.')
             Client.update_client_context(cli.id, None)
             cli.context = None
+
         elif m != '':
-            FacebookAPI.send_message(cli.id, m)        
+            FacebookAPI.send_message(cli.id, m)
 
 def send_reminder(cli, word, description):
-    # add 2 quick replies here, send_quick_reply (text = ...)
-    FacebookAPI.send_message(cli, ReminderMB.getDescription(word, description))
+    new_context = {'word': word, 'description': description}
+    json_context = json.dumps(new_context, indent=2)
+    Client.update_client_context(cli, json_context)
+    print(json_context)
+    FacebookAPI.send_quick_replies(cli, ReminderMB.reminder_quick_replies(), ReminderMB.getDescription(word, description))

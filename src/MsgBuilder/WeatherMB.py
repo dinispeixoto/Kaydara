@@ -1,5 +1,6 @@
 from flask import url_for
 from dateutil import parser
+from datetime import datetime
 import json, os
 
 """
@@ -38,7 +39,7 @@ def generateSimpleForecastDay(data, date, hour):
         if element['dt_txt'] >= date_hour:
             weather = element['weather'][0]
             icon_url = getIcon(weather['id'],weather['icon'])
-            title = f"Weather in {data['city']['name']} on {date} at {hour}"
+            title = f"Weather in {data['city']['name']} on {parser.parse(date).strftime('%d, %b %Y')} at {hour}"
             subtitle = getDescription(weather['description'], element['main']['temp'], element['main']['humidity'])
             return icon_url, title, subtitle
 
@@ -84,4 +85,3 @@ def quick_reply_location():
                     "content_type":"location"
                 }
             ]
-    

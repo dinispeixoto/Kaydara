@@ -97,7 +97,7 @@ def oauth2callback():
     credentials = flow.credentials
     Session.insert_session(client_id, state, credentials)
 
-    FacebookAPI.send_message(client_id, 'You are logged in =D')
+    FacebookAPI.send_message(client_id, 'You\'re logged in! 😁')
     cli = Client.get_client(client_id)
     NLP.process_message(client_id, cli.last_msg)
 

@@ -32,7 +32,9 @@ def generate_email(user_email, user_name, context):
     subject = Utils.rm_subject(context['subject'])
     decoded_msg = Utils.decode_msg(context['emailmessage'])
     message = Utils.rm_quotes(decoded_msg) + __signature(user_name)
-    return __create_mail(sender, to, subject, message)
+    info = 'To: ' + to + '\n\n' + message 
+    mail = __create_mail(sender, to, subject, message)
+    return (mail, subject, info)
 
 
 # add a signature

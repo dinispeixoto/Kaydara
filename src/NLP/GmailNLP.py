@@ -1,4 +1,4 @@
-from flask import session
+from flask import session, url_for
 from src.APIs import FacebookAPI, GmailAPI
 from src.MsgBuilder import GmailMB
 from src.Models import Client, Session
@@ -8,6 +8,7 @@ import json
 import google.oauth2.credentials
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
+
 
 
 def process_message(results, cli):
@@ -39,13 +40,14 @@ def send_mail(context, cli, session):
     user_email, user_name = GmailAPI.user_email(user_info_service)             # get user email
 
     gmail_service = __start_service('gmail', 'v1', credentials)
-    msg = GmailMB.generate_email(user_email, user_name, context)
-
+    (msg, subject, info)  = GmailMB.generate_email(user_email, user_name, context)
     GmailAPI.send_mail(gmail_service, 'me', msg)
+
+    img_path = url_for('static', filename=f'assets/img/mail/send.png', _external=True)
+    FacebookAPI.send_picture(cli.id, img_path, subject, info)
     FacebookAPI.send_message(cli.id, 'E-mail sent :)')
     Client.update_client_context(cli.id, None)
 
 
 def __start_service(service, version, credentials):
-    return googleapiclient.discovery.build(
-        service, version, credentials=credentials)
+    return googleapiclient.discovery.build(service, version, credentials=credentials)

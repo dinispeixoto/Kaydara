@@ -12,6 +12,8 @@ def list_events(service, num_events):
     eventsResult = (service.events()
                            .list(calendarId='primary',                          # is the primary calendar defined in Google Calendar, but can be the email 
                                  timeMin=now,                                   # since...
+                                 orderBy='startTime',                           # order list
+                                 singleEvents=True,
                                  maxResults=num_events)                         # get the "num_events" next events
                            .execute())                                        
     events = eventsResult.get('items', [])
@@ -26,4 +28,3 @@ def regist_event(service, event):
     return eventResult['id']
                     
                                            
-    

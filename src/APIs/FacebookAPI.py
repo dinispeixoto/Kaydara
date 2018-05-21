@@ -28,7 +28,7 @@ def send_message(user_id, text):
     __send(data)
 
 # Send picture
-def send_picture(user_id, imageUrl, title="", subtitle=""):
+def send_picture(user_id, imageUrl, title="", subtitle="", ratio="square"):
     show_typing(user_id,'typing_off')    
     if title != "":
         data = json.dumps({
@@ -37,7 +37,7 @@ def send_picture(user_id, imageUrl, title="", subtitle=""):
                     "attachment": {
                         "type": "template",
                         "payload": {
-                            "image_aspect_ratio": "square",
+                            "image_aspect_ratio": ratio,
                             "template_type": "generic",
                             "elements": [{
                                 "title": title,

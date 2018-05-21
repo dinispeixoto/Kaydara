@@ -13,12 +13,13 @@ from email.mime.base import MIMEBase
 def generate_login(user_id):
     return [{
         "title": 'Login with Google',
-        "image_url": url_for('static', filename=f'assets/img/login/login.png', _external=True),
+        "image_url": url_for('static', filename=f'assets/img/login/login2.png', _external=True),
         "subtitle": 'You have to open it in an external browser!',
         "buttons": [
             {
                 'type': 'web_url',
                 'url': "https://kaydara.herokuapp.com/authorize?id=" + str(user_id),
+                'messenger_extensions': 'false',  
                 'title': 'Log in'
             }
         ]

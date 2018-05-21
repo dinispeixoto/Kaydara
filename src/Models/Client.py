@@ -39,8 +39,11 @@ def get_client(id):
     
     if len(rs) != 0:
         if rs[0][0] is None:
-            return Client(id, None, None)
-        else:
+            if rs[0][1] is None:
+                return Client(id, None, None)
+            else: 
+                return Client(id, None, rs[0][1])
+        else:            
             return Client(id, json.loads(rs[0][0]), rs[0][1])
     else:
         return None

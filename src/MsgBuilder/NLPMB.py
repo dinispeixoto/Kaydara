@@ -3,26 +3,26 @@ def quick_reply_features():
                 {
                     'content_type': 'text',
                     'title': '🌤 Weather',
-                    'payload': 'weather_request'
+                    'payload': 'weather_info'
                 },
                 {
                     'content_type': 'text',
                     'title': '📰 News',
-                    'payload': 'news_request'
+                    'payload': 'news_info'
                 },
                 {
                     'content_type': 'text',
                     'title': '📧 E-mail',
-                    'payload': 'email_request'
+                    'payload': 'email_info'
                 },
                 {
                     'content_type': 'text',
                     'title': '⏰ Reminder',
-                    'payload': 'reminder_request'
+                    'payload': 'reminder_info'
                 },
                 {
                     'content_type': 'text',
                     'title': '🗓 Calendar',
-                    'payload': 'calendar_request'
+                    'payload': 'calendar_info'
                 },
             ]

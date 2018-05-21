@@ -19,16 +19,27 @@ def process_message(client_id, msg):
 def process_quick_reply(client_id, quick_reply):
     cli = Client.get_client(client_id)
     if cli is None:
-        cli = Client.insert_client(client_id, None)    
+        cli = Client.insert_client(client_id, None)
 
     results = IBMWatsonAPI.send_message(quick_reply, cli.context)
-    __selectAPI(results, cli)    
+    __selectAPI(results, cli)
+
+def send_info(results, cli):
+    print('INFO REQUEST')
+    (context, output, _) = results
+
+    for m in output:
+        if m != '':
+            FacebookAPI.send_message(cli.id, m)
+            Client.update_client_context(cli.id, None)
+            cli.context = None
 
 # method select the correct API and deals with invalid request
 def __selectAPI(results, cli):
     (newContext, _, _) = results
 
     switch_request = {
+        'Info': send_info,
         'WeatherRequest': WeatherNLP.process_message,
         'NewsRequest': NewsNLP.process_message,
         'EmailRequest': GmailNLP.process_message,
@@ -40,7 +51,7 @@ def __selectAPI(results, cli):
         print(node)
     except KeyError:
         node = 'AnythingElse'
- 
+
     switch_request.get(node, __invalid_request)(results, cli)
 
 

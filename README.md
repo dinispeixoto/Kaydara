@@ -1,3 +1,3 @@
 ## Kaydara
 
-TODO
+Personal Assistant for Facebook Messenger

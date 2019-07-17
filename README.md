@@ -3,4 +3,4 @@
 Personal Assistant for Facebook Messenger
 
 ### Demo
-[Demo](gifs/hello.gif)
+![Demo](https://raw.github.com/dinispeixoto/Kaydara/master/gifs/hello.gif)

@@ -1,4 +1,6 @@
 ## Kaydara
 
+Personal Assistant for Facebook Messenger
+
 ### Demo
-![Demo](gifs/hello.gif)
+[Demo](gifs/hello.gif)

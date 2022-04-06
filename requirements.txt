@@ -54,7 +54,7 @@ service-identity==17.0.0
 six==1.11.0
 SQLAlchemy==1.2.7
 stevedore==1.28.0
-Twisted==17.9.0
+Twisted==21.2.0
 txaio==2.9.0
 tzlocal==1.5.1
 uritemplate==3.0.0
